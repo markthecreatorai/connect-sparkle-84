@@ -15,10 +15,10 @@ import Dashboard from "./pages/Dashboard";
 import Deposit from "./pages/Deposit";
 import Withdraw from "./pages/Withdraw";
 import Transactions from "./pages/Transactions";
+import Team from "./pages/Team";
+import Invite from "./pages/Invite";
 import {
-  Team,
   Profile,
-  Invite,
   AdminDashboard,
   AdminUsers,
   AdminDeposits,

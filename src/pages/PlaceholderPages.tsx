@@ -10,11 +10,8 @@ const PlaceholderPage = ({ title }: { title: string }) => (
   </div>
 );
 
-// Dashboard is now in its own file
-// Deposit, Withdraw, Transactions are now in their own files
-export const Team = () => <PlaceholderPage title="Minha Equipe" />;
+// Dashboard, Deposit, Withdraw, Transactions, Team, Invite are now in their own files
 export const Profile = () => <PlaceholderPage title="Meu Perfil" />;
-export const Invite = () => <PlaceholderPage title="Link de Convite" />;
 
 export const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
 export const AdminUsers = () => <PlaceholderPage title="Gerenciar Usuários" />;
