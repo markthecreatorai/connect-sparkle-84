@@ -11,11 +11,5 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 );
 
 // Dashboard, Deposit, Withdraw, Transactions, Team, Invite are now in their own files
+// Admin pages are now in src/pages/admin/
 export const Profile = () => <PlaceholderPage title="Meu Perfil" />;
-
-export const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
-export const AdminUsers = () => <PlaceholderPage title="Gerenciar Usuários" />;
-export const AdminDeposits = () => <PlaceholderPage title="Gerenciar Depósitos" />;
-export const AdminWithdrawals = () => <PlaceholderPage title="Gerenciar Saques" />;
-export const AdminSettings = () => <PlaceholderPage title="Configurações da Plataforma" />;
-export const AdminLogs = () => <PlaceholderPage title="Logs de Atividade" />;
