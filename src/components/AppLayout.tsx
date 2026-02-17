@@ -123,9 +123,9 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Mobile Slide Menu */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 flex">
+        <div className="lg:hidden fixed inset-0 z-40 flex justify-end">
           <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative z-50 w-64 bg-sidebar border-r border-border flex flex-col h-full">
+          <aside className="relative z-50 w-64 bg-sidebar border-l border-border flex flex-col h-full">
             <div className="p-4 border-b border-border">
               <span className="font-heading text-lg font-bold">Menu</span>
             </div>
