@@ -24,7 +24,7 @@ import AdminDeposits from "./pages/admin/AdminDeposits";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogs from "./pages/admin/AdminLogs";
-import { Profile } from "./pages/PlaceholderPages";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
