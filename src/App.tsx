@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute, AdminRoute, PublicOnlyRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -17,15 +18,13 @@ import Withdraw from "./pages/Withdraw";
 import Transactions from "./pages/Transactions";
 import Team from "./pages/Team";
 import Invite from "./pages/Invite";
-import {
-  Profile,
-  AdminDashboard,
-  AdminUsers,
-  AdminDeposits,
-  AdminWithdrawals,
-  AdminSettings,
-  AdminLogs,
-} from "./pages/PlaceholderPages";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminDeposits from "./pages/admin/AdminDeposits";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminLogs from "./pages/admin/AdminLogs";
+import { Profile } from "./pages/PlaceholderPages";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +36,7 @@ const UserPage = ({ children }: { children: React.ReactNode }) => (
 
 const AdminPage = ({ children }: { children: React.ReactNode }) => (
   <AdminRoute>
-    <AppLayout>{children}</AppLayout>
+    <AdminLayout>{children}</AdminLayout>
   </AdminRoute>
 );
 
