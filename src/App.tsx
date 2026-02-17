@@ -12,10 +12,10 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import Deposit from "./pages/Deposit";
+import Withdraw from "./pages/Withdraw";
+import Transactions from "./pages/Transactions";
 import {
-  Deposit,
-  Withdraw,
-  Transactions,
   Team,
   Profile,
   Invite,

@@ -11,9 +11,7 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 );
 
 // Dashboard is now in its own file
-export const Deposit = () => <PlaceholderPage title="Depositar" />;
-export const Withdraw = () => <PlaceholderPage title="Solicitar Saque" />;
-export const Transactions = () => <PlaceholderPage title="Histórico de Transações" />;
+// Deposit, Withdraw, Transactions are now in their own files
 export const Team = () => <PlaceholderPage title="Minha Equipe" />;
 export const Profile = () => <PlaceholderPage title="Meu Perfil" />;
 export const Invite = () => <PlaceholderPage title="Link de Convite" />;
