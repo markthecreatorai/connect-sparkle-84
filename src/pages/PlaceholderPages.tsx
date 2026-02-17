@@ -10,7 +10,7 @@ const PlaceholderPage = ({ title }: { title: string }) => (
   </div>
 );
 
-export const Dashboard = () => <PlaceholderPage title="Dashboard" />;
+// Dashboard is now in its own file
 export const Deposit = () => <PlaceholderPage title="Depositar" />;
 export const Withdraw = () => <PlaceholderPage title="Solicitar Saque" />;
 export const Transactions = () => <PlaceholderPage title="Histórico de Transações" />;

@@ -11,8 +11,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
 import {
-  Dashboard,
   Deposit,
   Withdraw,
   Transactions,
