@@ -1,31 +1,42 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Save, Loader2 } from "lucide-react";
 
-const SETTINGS_KEYS = [
-  { key: "min_deposit", label: "Depósito mínimo (R$)", field: "amount" },
-  { key: "min_withdrawal", label: "Saque mínimo (R$)", field: "amount" },
-  { key: "max_withdrawal", label: "Saque máximo (R$)", field: "amount" },
-  { key: "withdrawal_fee", label: "Taxa de saque (%)", field: "percent" },
-  { key: "commission_n1", label: "Comissão N1 (%)", field: "percent" },
-  { key: "commission_n2", label: "Comissão N2 (%)", field: "percent" },
-  { key: "commission_n3", label: "Comissão N3 (%)", field: "percent" },
-];
-
-const VIP_KEYS = ["0", "1", "2", "3", "4"];
-
 const AdminSettings = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [vipReqs, setVipReqs] = useState<Record<string, string>>({});
+  const [confirmModal, setConfirmModal] = useState(false);
+
+  // Commission
+  const [commN1, setCommN1] = useState("");
+  const [commN2, setCommN2] = useState("");
+  const [commN3, setCommN3] = useState("");
+
+  // Withdrawals
+  const [wdFee, setWdFee] = useState("");
+  const [wdMin, setWdMin] = useState("");
+  const [wdMax, setWdMax] = useState("");
+
+  // Deposits
+  const [depMin, setDepMin] = useState("");
+
+  // VIP
+  const [vip1, setVip1] = useState("");
+  const [vip2, setVip2] = useState("");
+  const [vip3, setVip3] = useState("");
+  const [vip4, setVip4] = useState("");
+
+  // PIX
+  const [pixType, setPixType] = useState("cpf");
   const [pixKey, setPixKey] = useState("");
-  const [pixType, setPixType] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -33,60 +44,60 @@ const AdminSettings = () => {
       const map: Record<string, any> = {};
       (data ?? []).forEach((s) => { map[s.key] = s.value; });
 
-      const vals: Record<string, string> = {};
-      SETTINGS_KEYS.forEach((s) => {
-        vals[s.key] = String((map[s.key] as any)?.[s.field] ?? "");
-      });
-      setValues(vals);
+      setCommN1(String(map["commission_n1"]?.percent ?? ""));
+      setCommN2(String(map["commission_n2"]?.percent ?? ""));
+      setCommN3(String(map["commission_n3"]?.percent ?? ""));
+      setWdFee(String(map["withdrawal_fee"]?.percent ?? ""));
+      setWdMin(String(map["min_withdrawal"]?.amount ?? ""));
+      setWdMax(String(map["max_withdrawal"]?.amount ?? ""));
+      setDepMin(String(map["min_deposit"]?.amount ?? ""));
 
       const vr = (map["vip_requirements"] ?? {}) as Record<string, number>;
-      const vipVals: Record<string, string> = {};
-      VIP_KEYS.forEach((k) => { vipVals[k] = String(vr[k] ?? ""); });
-      setVipReqs(vipVals);
+      setVip1(String(vr["1"] ?? ""));
+      setVip2(String(vr["2"] ?? ""));
+      setVip3(String(vr["3"] ?? ""));
+      setVip4(String(vr["4"] ?? ""));
 
       const pix = map["platform_pix_key"] as any;
+      setPixType(pix?.type ?? "cpf");
       setPixKey(pix?.key ?? "");
-      setPixType(pix?.type ?? "");
 
       setLoading(false);
     };
     load();
   }, []);
 
-  const save = async () => {
+  const doSave = async () => {
+    setConfirmModal(false);
     setSaving(true);
 
-    const upserts: { key: string; value: any }[] = [];
-
-    SETTINGS_KEYS.forEach((s) => {
-      const val = parseFloat(values[s.key] || "0");
-      upserts.push({ key: s.key, value: { [s.field]: val } });
-    });
-
-    const vipObj: Record<string, number> = {};
-    VIP_KEYS.forEach((k) => { vipObj[k] = parseInt(vipReqs[k] || "0"); });
-    upserts.push({ key: "vip_requirements", value: vipObj });
-
-    upserts.push({ key: "platform_pix_key", value: { key: pixKey, type: pixType } });
-
-    // Also update commission_rates for the invite page
-    upserts.push({
-      key: "commission_rates",
-      value: {
-        level_1: parseFloat(values["commission_n1"] || "0"),
-        level_2: parseFloat(values["commission_n2"] || "0"),
-        level_3: parseFloat(values["commission_n3"] || "0"),
-      },
-    });
+    const upserts: { key: string; value: any }[] = [
+      { key: "commission_n1", value: { percent: parseFloat(commN1 || "0") } },
+      { key: "commission_n2", value: { percent: parseFloat(commN2 || "0") } },
+      { key: "commission_n3", value: { percent: parseFloat(commN3 || "0") } },
+      { key: "withdrawal_fee", value: { percent: parseFloat(wdFee || "0") } },
+      { key: "min_withdrawal", value: { amount: parseFloat(wdMin || "0") } },
+      { key: "max_withdrawal", value: { amount: parseFloat(wdMax || "0") } },
+      { key: "min_deposit", value: { amount: parseFloat(depMin || "0") } },
+      { key: "vip_requirements", value: { "0": 0, "1": parseInt(vip1 || "0"), "2": parseInt(vip2 || "0"), "3": parseInt(vip3 || "0"), "4": parseInt(vip4 || "0") } },
+      { key: "platform_pix_key", value: { type: pixType, key: pixKey } },
+      { key: "commission_rates", value: { level_1: parseFloat(commN1 || "0"), level_2: parseFloat(commN2 || "0"), level_3: parseFloat(commN3 || "0") } },
+    ];
 
     for (const u of upserts) {
       await supabase.from("platform_settings").upsert(
-        { key: u.key, value: u.value, updated_at: new Date().toISOString() },
+        { key: u.key, value: u.value, updated_at: new Date().toISOString(), updated_by: user?.id },
         { onConflict: "key" }
       );
     }
 
-    toast.success("Configurações salvas!");
+    await supabase.from("activity_logs").insert({
+      user_id: user?.id,
+      action: "settings_updated",
+      details: { keys: upserts.map((u) => u.key) },
+    });
+
+    toast.success("Configurações atualizadas com sucesso!");
     setSaving(false);
   };
 
@@ -94,81 +105,117 @@ const AdminSettings = () => {
     return (
       <div className="space-y-4 p-4 lg:p-6 max-w-3xl mx-auto">
         <h1 className="font-heading text-xl font-bold">Configurações</h1>
-        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
+        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
       </div>
     );
   }
+
+  const NumInput = ({ label, value, onChange, suffix }: { label: string; value: string; onChange: (v: string) => void; suffix?: string }) => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <div className="relative">
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="bg-secondary border-border pr-10"
+        />
+        {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{suffix}</span>}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 p-4 lg:p-6 max-w-3xl mx-auto">
       <h1 className="font-heading text-xl font-bold">Configurações da Plataforma</h1>
 
-      {/* Financial settings */}
+      {/* Comissões */}
       <div className="glass-card rounded-xl p-5 space-y-4">
-        <h2 className="font-heading text-sm font-bold">Valores e Taxas</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {SETTINGS_KEYS.map((s) => (
-            <div key={s.key} className="space-y-1">
-              <Label className="text-xs">{s.label}</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={values[s.key] ?? ""}
-                onChange={(e) => setValues((p) => ({ ...p, [s.key]: e.target.value }))}
-                className="bg-secondary border-border"
-              />
-            </div>
-          ))}
+        <h2 className="font-heading text-sm font-bold text-primary">Comissões</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <NumInput label="Comissão Nível 1" value={commN1} onChange={setCommN1} suffix="%" />
+          <NumInput label="Comissão Nível 2" value={commN2} onChange={setCommN2} suffix="%" />
+          <NumInput label="Comissão Nível 3" value={commN3} onChange={setCommN3} suffix="%" />
         </div>
       </div>
 
-      {/* VIP Requirements */}
+      {/* Saques */}
       <div className="glass-card rounded-xl p-5 space-y-4">
-        <h2 className="font-heading text-sm font-bold">Requisitos VIP (indicados válidos)</h2>
-        <div className="grid grid-cols-5 gap-3">
-          {VIP_KEYS.map((k) => (
-            <div key={k} className="space-y-1">
-              <Label className="text-xs text-center block">VIP {k}</Label>
-              <Input
-                type="number"
-                value={vipReqs[k] ?? ""}
-                onChange={(e) => setVipReqs((p) => ({ ...p, [k]: e.target.value }))}
-                className="bg-secondary border-border text-center"
-              />
-            </div>
-          ))}
+        <h2 className="font-heading text-sm font-bold text-primary">Saques</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <NumInput label="Taxa de saque" value={wdFee} onChange={setWdFee} suffix="%" />
+          <NumInput label="Saque mínimo" value={wdMin} onChange={setWdMin} suffix="R$" />
+          <NumInput label="Saque máximo" value={wdMax} onChange={setWdMax} suffix="R$" />
         </div>
       </div>
 
-      {/* PIX Key */}
+      {/* Depósitos */}
       <div className="glass-card rounded-xl p-5 space-y-4">
-        <h2 className="font-heading text-sm font-bold">Chave PIX da Plataforma</h2>
+        <h2 className="font-heading text-sm font-bold text-primary">Depósitos</h2>
+        <NumInput label="Depósito mínimo" value={depMin} onChange={setDepMin} suffix="R$" />
+      </div>
+
+      {/* Requisitos VIP */}
+      <div className="glass-card rounded-xl p-5 space-y-4">
+        <h2 className="font-heading text-sm font-bold text-primary">Requisitos VIP (indicados válidos)</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-center block">VIP 0</Label>
+            <Input value="0" disabled className="bg-secondary/50 border-border text-center text-muted-foreground" />
+          </div>
+          <NumInput label="VIP 1" value={vip1} onChange={setVip1} />
+          <NumInput label="VIP 2" value={vip2} onChange={setVip2} />
+          <NumInput label="VIP 3" value={vip3} onChange={setVip3} />
+          <NumInput label="VIP 4" value={vip4} onChange={setVip4} />
+        </div>
+      </div>
+
+      {/* PIX */}
+      <div className="glass-card rounded-xl p-5 space-y-4">
+        <h2 className="font-heading text-sm font-bold text-primary">Chave PIX da Plataforma</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label className="text-xs">Tipo</Label>
-            <Input
-              value={pixType}
-              onChange={(e) => setPixType(e.target.value)}
-              placeholder="cpf, email, phone, random"
-              className="bg-secondary border-border"
-            />
+            <Select value={pixType} onValueChange={setPixType}>
+              <SelectTrigger className="bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cpf">CPF</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Telefone</SelectItem>
+                <SelectItem value="random">Aleatória</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Chave</Label>
-            <Input
-              value={pixKey}
-              onChange={(e) => setPixKey(e.target.value)}
-              placeholder="Chave PIX"
-              className="bg-secondary border-border"
-            />
+            <Input value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="Chave PIX" className="bg-secondary border-border" />
           </div>
         </div>
       </div>
 
-      <Button onClick={save} disabled={saving} className="w-full gradient-primary btn-glow text-primary-foreground gap-2">
+      <Button onClick={() => setConfirmModal(true)} disabled={saving} className="w-full gradient-primary btn-glow text-primary-foreground gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Salvar Configurações
       </Button>
+
+      {/* Confirmation Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setConfirmModal(false)} />
+          <div className="glass-card relative z-10 w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h2 className="font-heading text-lg font-bold">Confirmar</h2>
+            <p className="text-sm text-muted-foreground">Tem certeza que deseja atualizar as configurações?</p>
+            <div className="flex gap-2">
+              <Button onClick={() => setConfirmModal(false)} variant="outline" className="flex-1">Cancelar</Button>
+              <Button onClick={doSave} className="flex-1 gradient-primary text-primary-foreground">Confirmar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
