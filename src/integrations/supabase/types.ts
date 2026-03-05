@@ -461,6 +461,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      test_distribute_vip_commissions: {
+        Args: { _user_id: string; _vip_plan_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
