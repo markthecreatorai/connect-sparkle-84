@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, subDays } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { format, subDays, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Users,
@@ -11,6 +12,8 @@ import {
   ArrowUpCircle,
   Award,
   AlertTriangle,
+  Download,
+  TrendingUp,
 } from "lucide-react";
 import {
   BarChart,
@@ -33,6 +36,12 @@ interface Stats {
   pendingWithdrawals: number;
 }
 
+interface CommissionStats {
+  today: number;
+  month: number;
+  topGenerators: { name: string; total: number }[];
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -44,13 +53,18 @@ const AdminDashboard = () => {
     totalCommissions: 0,
     pendingWithdrawals: 0,
   });
+  const [commStats, setCommStats] = useState<CommissionStats>({ today: 0, month: 0, topGenerators: [] });
   const [chartData, setChartData] = useState<{ date: string; count: number }[]>([]);
   const [pendingDeposits, setPendingDeposits] = useState<any[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<any[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const monthStart = startOfMonth(new Date()).toISOString();
 
       const [
         usersRes,
@@ -62,6 +76,9 @@ const AdminDashboard = () => {
         depPendingRes,
         wdPendingListRes,
         recentProfiles,
+        commsToday,
+        commsMonth,
+        commsAll,
       ] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
@@ -72,6 +89,9 @@ const AdminDashboard = () => {
         supabase.from("deposits").select("id, amount, created_at, user_id, profiles(full_name)").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
         supabase.from("withdrawals").select("id, amount, created_at, user_id, profiles(full_name)").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
         supabase.from("profiles").select("created_at").gte("created_at", thirtyDaysAgo).order("created_at", { ascending: true }),
+        supabase.from("commissions").select("amount").gte("created_at", todayStart.toISOString()),
+        supabase.from("commissions").select("amount").gte("created_at", monthStart),
+        supabase.from("commissions").select("source_user_id, amount"),
       ]);
 
       setStats({
@@ -82,6 +102,32 @@ const AdminDashboard = () => {
         totalCommissions: (commsRes.data ?? []).reduce((s, d) => s + Number(d.amount), 0),
         pendingWithdrawals: (wdPending.data ?? []).reduce((s, d) => s + Number(d.amount), 0),
       });
+
+      // Commission stats
+      const todayTotal = (commsToday.data ?? []).reduce((s, d) => s + Number(d.amount), 0);
+      const monthTotal = (commsMonth.data ?? []).reduce((s, d) => s + Number(d.amount), 0);
+
+      // Top generators (by source_user_id)
+      const genMap: Record<string, number> = {};
+      (commsAll.data ?? []).forEach((c) => {
+        genMap[c.source_user_id] = (genMap[c.source_user_id] || 0) + Number(c.amount);
+      });
+      const topIds = Object.entries(genMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      let topGenerators: { name: string; total: number }[] = [];
+      if (topIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", topIds.map(([id]) => id));
+        const nameMap: Record<string, string> = {};
+        (profiles ?? []).forEach((p) => (nameMap[p.id] = p.full_name));
+        topGenerators = topIds.map(([id, total]) => ({ name: nameMap[id] ?? "—", total }));
+      }
+
+      setCommStats({ today: todayTotal, month: monthTotal, topGenerators });
 
       setPendingDeposits(depPendingRes.data ?? []);
       setPendingWithdrawals(wdPendingListRes.data ?? []);
@@ -103,6 +149,32 @@ const AdminDashboard = () => {
     };
     load();
   }, []);
+
+  const exportCSV = async () => {
+    setExporting(true);
+    const monthStart = startOfMonth(new Date()).toISOString();
+    const { data } = await supabase
+      .from("commissions")
+      .select("id, beneficiary_id, source_user_id, amount, level, type, origin_payment_id, created_at")
+      .gte("created_at", monthStart)
+      .order("created_at", { ascending: false });
+
+    if (data && data.length > 0) {
+      const headers = ["ID", "Beneficiário", "Origem", "Valor", "Nível", "Tipo", "Payment ID", "Data"];
+      const rows = data.map((c) =>
+        [c.id, c.beneficiary_id, c.source_user_id, c.amount, c.level, c.type, c.origin_payment_id ?? "", c.created_at ?? ""].join(",")
+      );
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `comissoes_${format(new Date(), "yyyy-MM")}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    setExporting(false);
+  };
 
   const cards = [
     { label: "Total de Usuários", value: stats.totalUsers, icon: Users, color: "text-primary" },
@@ -135,6 +207,56 @@ const AdminDashboard = () => {
               </p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Commissions Section */}
+      {!loading && (
+        <div className="glass-card rounded-xl p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-warning" />
+              <h2 className="font-heading text-sm font-bold">Comissões VIP</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportCSV}
+              disabled={exporting}
+              className="text-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1" />
+              {exporting ? "Exportando..." : "CSV do mês"}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg p-3 bg-secondary/50">
+              <p className="text-[10px] text-muted-foreground uppercase">Hoje</p>
+              <p className="font-mono text-lg font-bold text-warning">{fmtBRL(commStats.today)}</p>
+            </div>
+            <div className="rounded-lg p-3 bg-secondary/50">
+              <p className="text-[10px] text-muted-foreground uppercase">Este mês</p>
+              <p className="font-mono text-lg font-bold text-warning">{fmtBRL(commStats.month)}</p>
+            </div>
+          </div>
+
+          {commStats.topGenerators.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Top geradores de comissão</p>
+              <div className="space-y-1.5">
+                {commStats.topGenerators.map((g, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground truncate">
+                      <span className="text-foreground font-medium mr-1.5">#{i + 1}</span>
+                      {g.name}
+                    </span>
+                    <span className="font-mono font-bold text-warning shrink-0">{fmtBRL(g.total)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
