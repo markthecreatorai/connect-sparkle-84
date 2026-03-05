@@ -450,6 +450,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      distribute_vip_commissions: {
+        Args: { _payment_id: string; _user_id: string; _vip_plan_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
