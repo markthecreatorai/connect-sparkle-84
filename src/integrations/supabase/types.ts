@@ -57,8 +57,11 @@ export type Database = {
           deposit_id: string
           id: string
           level: number
+          origin_payment_id: string | null
           percentage: number
           source_user_id: string
+          type: string
+          vip_plan_id: string | null
         }
         Insert: {
           amount: number
@@ -67,8 +70,11 @@ export type Database = {
           deposit_id: string
           id?: string
           level: number
+          origin_payment_id?: string | null
           percentage: number
           source_user_id: string
+          type?: string
+          vip_plan_id?: string | null
         }
         Update: {
           amount?: number
@@ -77,8 +83,11 @@ export type Database = {
           deposit_id?: string
           id?: string
           level?: number
+          origin_payment_id?: string | null
           percentage?: number
           source_user_id?: string
+          type?: string
+          vip_plan_id?: string | null
         }
         Relationships: [
           {
@@ -100,6 +109,13 @@ export type Database = {
             columns: ["source_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_vip_plan_id_fkey"
+            columns: ["vip_plan_id"]
+            isOneToOne: false
+            referencedRelation: "vip_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -203,6 +219,7 @@ export type Database = {
           referred_by: string | null
           updated_at: string | null
           vip_level: number | null
+          vip_purchased_at: string | null
         }
         Insert: {
           balance?: number | null
@@ -219,6 +236,7 @@ export type Database = {
           referred_by?: string | null
           updated_at?: string | null
           vip_level?: number | null
+          vip_purchased_at?: string | null
         }
         Update: {
           balance?: number | null
@@ -235,6 +253,7 @@ export type Database = {
           referred_by?: string | null
           updated_at?: string | null
           vip_level?: number | null
+          vip_purchased_at?: string | null
         }
         Relationships: [
           {
@@ -318,6 +337,51 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vip_plans: {
+        Row: {
+          color_hex: string
+          commission_a_pct: number
+          commission_b_pct: number
+          commission_c_pct: number
+          created_at: string | null
+          id: string
+          level: number
+          name: string
+          price: number
+          reward_a: number
+          reward_b: number
+          reward_c: number
+        }
+        Insert: {
+          color_hex?: string
+          commission_a_pct?: number
+          commission_b_pct?: number
+          commission_c_pct?: number
+          created_at?: string | null
+          id?: string
+          level: number
+          name: string
+          price: number
+          reward_a: number
+          reward_b: number
+          reward_c: number
+        }
+        Update: {
+          color_hex?: string
+          commission_a_pct?: number
+          commission_b_pct?: number
+          commission_c_pct?: number
+          created_at?: string | null
+          id?: string
+          level?: number
+          name?: string
+          price?: number
+          reward_a?: number
+          reward_b?: number
+          reward_c?: number
         }
         Relationships: []
       }
