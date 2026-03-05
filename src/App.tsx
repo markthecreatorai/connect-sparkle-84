@@ -25,6 +25,7 @@ import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogs from "./pages/admin/AdminLogs";
 import Profile from "./pages/Profile";
+import VipPlans from "./pages/VipPlans";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/team" element={<UserPage><Team /></UserPage>} />
             <Route path="/profile" element={<UserPage><Profile /></UserPage>} />
             <Route path="/invite" element={<UserPage><Invite /></UserPage>} />
+            <Route path="/vip" element={<UserPage><VipPlans /></UserPage>} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
