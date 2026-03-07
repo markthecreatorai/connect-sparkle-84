@@ -13,6 +13,8 @@ import {
   Users2,
   CheckSquare,
   Shield,
+  RotateCw,
+  Shield,
   Award,
   Crown,
   Diamond,
@@ -99,6 +101,9 @@ const Dashboard = () => {
   const [vipReqs, setVipReqs] = useState<VipReqs>({});
   const [vipLevels, setVipLevels] = useState<VipLevelRow[]>([]);
   const [todayTasks, setTodayTasks] = useState<{ tasks_completed: number; tasks_required: number } | null>(null);
+  const [checkinDone, setCheckinDone] = useState(false);
+  const [checkinStreak, setCheckinStreak] = useState(0);
+  const [spinDone, setSpinDone] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [showVipLevels, setShowVipLevels] = useState(false);
@@ -107,7 +112,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes] = await Promise.all([
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes, checkinRes, spinRes, prevCheckinsRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("*")
@@ -135,8 +141,26 @@ const Dashboard = () => {
           .from("daily_tasks")
           .select("tasks_completed, tasks_required")
           .eq("user_id", user.id)
-          .eq("task_date", new Date().toISOString().slice(0, 10))
+          .eq("task_date", todayIso)
           .maybeSingle(),
+        supabase
+          .from("daily_checkins")
+          .select("id, streak_days")
+          .eq("user_id", user.id)
+          .eq("checkin_date", todayIso)
+          .maybeSingle(),
+        supabase
+          .from("daily_spins")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("spin_date", todayIso)
+          .maybeSingle(),
+        supabase
+          .from("daily_checkins")
+          .select("checkin_date")
+          .eq("user_id", user.id)
+          .order("checkin_date", { ascending: false })
+          .limit(2),
       ]);
 
       setTransactions(txRes.data ?? []);
@@ -151,6 +175,15 @@ const Dashboard = () => {
       if (settingsRes.data) setVipReqs((settingsRes.data.value as any) ?? {});
       setVipLevels(((vipLevelsRes.data as unknown as VipLevelRow[]) ?? []));
       setTodayTasks((taskTodayRes.data as { tasks_completed: number; tasks_required: number } | null) ?? null);
+      setCheckinDone(!!checkinRes.data);
+      setSpinDone(!!spinRes.data);
+      if (checkinRes.data) {
+        setCheckinStreak(Number((checkinRes.data as any).streak_days || 1));
+      } else {
+        const prev = (prevCheckinsRes.data as any[]) ?? [];
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        setCheckinStreak(prev.some((r) => r.checkin_date === yesterday) ? 0 : 0);
+      }
 
       // Network counts
       const n1Ids = (n1Res.data ?? []).map((p) => p.id);
@@ -424,6 +457,33 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* GAMIFICAÇÃO */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="glass-card rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold">Check-in Diário</p>
+          </div>
+          {checkinDone ? (
+            <p className="text-sm text-success">Check-in feito hoje! Volte amanhã ✓</p>
+          ) : (
+            <Button onClick={doCheckin} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
+          )}
+          <p className="text-xs text-muted-foreground">Streak: {checkinStreak} dia(s) consecutivos</p>
+        </div>
+
+        <div className="glass-card rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <RotateCw className="h-4 w-4 text-warning" />
+            <p className="text-sm font-semibold">Girar o Escudo 🛡️</p>
+          </div>
+          <Button onClick={doSpin} disabled={spinDone} className="gradient-primary text-primary-foreground">
+            {spinDone ? "Já girou hoje" : "Girar!"}
+          </Button>
+          <p className="text-xs text-muted-foreground">Disponível 1x por dia</p>
+        </div>
+      </div>
 
       {/* TRANSACTIONS */}
       <div className="space-y-3">
