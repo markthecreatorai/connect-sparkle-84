@@ -74,13 +74,16 @@ Deno.serve(async (req) => {
 
 // ─── helpers ────────────────────────────────────────────────────
 
-async function getSetting(db: ReturnType<typeof createClient>, key: string) {
+// deno-lint-ignore no-explicit-any
+type DB = any;
+
+async function getSetting(db: DB, key: string) {
   const { data } = await db.from("platform_settings").select("value").eq("key", key).maybeSingle();
   return data?.value as Record<string, unknown> | null;
 }
 
 async function logActivity(
-  db: ReturnType<typeof createClient>,
+  db: DB,
   userId: string,
   action: string,
   details: Record<string, unknown>,
@@ -90,7 +93,7 @@ async function logActivity(
 
 // ─── recalculate VIP ────────────────────────────────────────────
 
-async function recalculateVip(db: ReturnType<typeof createClient>, userId: string) {
+async function recalculateVip(db: DB, userId: string) {
   // Count valid referrals: referred_by = userId AND has approved deposit
   const { data: referrals } = await db
     .from("profiles")
@@ -144,7 +147,7 @@ async function recalculateVip(db: ReturnType<typeof createClient>, userId: strin
 
 // ─── APPROVE DEPOSIT ────────────────────────────────────────────
 
-async function approveDeposit(db: ReturnType<typeof createClient>, depositId: string, adminId: string) {
+async function approveDeposit(db: DB, depositId: string, adminId: string) {
   // 1. Fetch deposit
   const { data: deposit, error } = await db
     .from("deposits")
@@ -268,7 +271,7 @@ async function approveDeposit(db: ReturnType<typeof createClient>, depositId: st
 
 // ─── REJECT DEPOSIT ─────────────────────────────────────────────
 
-async function rejectDeposit(db: ReturnType<typeof createClient>, depositId: string, adminId: string, notes: string) {
+async function rejectDeposit(db: DB, depositId: string, adminId: string, notes: string) {
   const { data: deposit } = await db.from("deposits").select("*").eq("id", depositId).single();
   if (!deposit) throw new Error("Deposit not found");
   if (deposit.status !== "pending") throw new Error("Deposit already processed");
@@ -300,7 +303,7 @@ async function rejectDeposit(db: ReturnType<typeof createClient>, depositId: str
 
 // ─── APPROVE WITHDRAWAL ────────────────────────────────────────
 
-async function approveWithdrawal(db: ReturnType<typeof createClient>, withdrawalId: string, adminId: string) {
+async function approveWithdrawal(db: DB, withdrawalId: string, adminId: string) {
   const { data: wd } = await db.from("withdrawals").select("*").eq("id", withdrawalId).single();
   if (!wd) throw new Error("Withdrawal not found");
   if (wd.status !== "pending") throw new Error("Withdrawal already processed");
@@ -342,7 +345,7 @@ async function approveWithdrawal(db: ReturnType<typeof createClient>, withdrawal
 
 // ─── REJECT WITHDRAWAL ─────────────────────────────────────────
 
-async function rejectWithdrawal(db: ReturnType<typeof createClient>, withdrawalId: string, adminId: string, notes: string) {
+async function rejectWithdrawal(db: DB, withdrawalId: string, adminId: string, notes: string) {
   const { data: wd } = await db.from("withdrawals").select("*").eq("id", withdrawalId).single();
   if (!wd) throw new Error("Withdrawal not found");
   if (wd.status !== "pending") throw new Error("Withdrawal already processed");

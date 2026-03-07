@@ -385,6 +385,30 @@ export type Database = {
         }
         Relationships: []
       }
+      wallets: {
+        Row: {
+          balance: number | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          wallet_type: string
+        }
+        Insert: {
+          balance?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          wallet_type: string
+        }
+        Update: {
+          balance?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       withdrawals: {
         Row: {
           admin_notes: string | null
