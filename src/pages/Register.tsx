@@ -74,19 +74,14 @@ const Register = () => {
 
     const normalizedReferral = referralCode.toUpperCase().trim();
 
-    const { data: referralEntry } = await supabase
-      .from("referral_tree" as never)
-      .select("user_id")
-      .eq("referral_code", normalizedReferral)
-      .maybeSingle();
+    const { data: referredBy, error: rpcError } = await supabase
+      .rpc("validate_referral_code", { _code: normalizedReferral });
 
-    if (!referralEntry) {
+    if (rpcError || !referredBy) {
       toast.error("Código de indicação inválido");
       setLoading(false);
       return;
     }
-
-    const referredBy = (referralEntry as { user_id: string }).user_id;
 
     const { error } = await supabase.auth.signUp({
       email: pseudoEmail,
