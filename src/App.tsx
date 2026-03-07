@@ -19,6 +19,7 @@ import Transactions from "./pages/Transactions";
 import Team from "./pages/Team";
 import Tasks from "./pages/Tasks";
 import Invite from "./pages/Invite";
+import Guide from "./pages/Guide";
 import Investments from "./pages/Investments";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
