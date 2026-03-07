@@ -14,7 +14,6 @@ import {
   CheckSquare,
   Shield,
   RotateCw,
-  Shield,
   Award,
   Crown,
   Diamond,
