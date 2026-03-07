@@ -142,24 +142,9 @@ const Dashboard = () => {
           .eq("user_id", user.id)
           .eq("task_date", todayIso)
           .maybeSingle(),
-        supabase
-          .from("daily_checkins")
-          .select("id, streak_days")
-          .eq("user_id", user.id)
-          .eq("checkin_date", todayIso)
-          .maybeSingle(),
-        supabase
-          .from("daily_spins")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("spin_date", todayIso)
-          .maybeSingle(),
-        supabase
-          .from("daily_checkins")
-          .select("checkin_date")
-          .eq("user_id", user.id)
-          .order("checkin_date", { ascending: false })
-          .limit(2),
+        Promise.resolve({ data: null }),
+        Promise.resolve({ data: null }),
+        Promise.resolve({ data: [] }),
       ]);
 
       setTransactions(txRes.data ?? []);
