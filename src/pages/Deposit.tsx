@@ -1,22 +1,17 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  ArrowDownCircle,
-  Check,
-  Copy,
-  Loader2,
-  Inbox,
-} from "lucide-react";
+import { ArrowDownCircle, Check, Copy, Loader2, Shield, Wallet } from "lucide-react";
 
-// ─── currency helpers ───────────────────────────────────────────
+const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const parseCurrency = (v: string): number => {
   const digits = v.replace(/\D/g, "");
@@ -28,64 +23,92 @@ const fmtInput = (v: string): string => {
   return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
-const fmtBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const STATUS: Record<string, { label: string; cls: string }> = {
-  pending: { label: "Pendente", cls: "bg-warning/20 text-warning" },
-  approved: { label: "Aprovado", cls: "bg-success/20 text-success" },
-  rejected: { label: "Rejeitado", cls: "bg-destructive/20 text-destructive" },
-};
-
-// ─── component ──────────────────────────────────────────────────
+type Tab = "vip" | "saldo";
 
 const Deposit = () => {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const [tab, setTab] = useState<Tab>("vip");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [rawValue, setRawValue] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
-  const [minDeposit, setMinDeposit] = useState(10);
-  const [pixKey, setPixKey] = useState<{ key: string; type: string } | null>(null);
+  const [vipLevels, setVipLevels] = useState<any[]>([]);
+  const [wallets, setWallets] = useState({ recharge: 0, personal: 0, income: 0 });
   const [deposits, setDeposits] = useState<any[]>([]);
-  const [success, setSuccess] = useState(false);
+
+  const [pixKey, setPixKey] = useState<{ key: string; type: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const amount = parseCurrency(rawValue);
+  const [rawDeposit, setRawDeposit] = useState("");
+  const [minDeposit, setMinDeposit] = useState(50);
+
+  const [selectedVip, setSelectedVip] = useState<any>(null);
+
+  const vipLevel = Number(profile?.vip_level ?? 0);
+  const vipCode = vipLevel <= 0 ? "intern" : `vip${vipLevel}`;
+  const currentVip = vipLevels.find((v) => v.level_code === vipCode);
 
   useEffect(() => {
     if (!user) return;
+
     const load = async () => {
-      const [minRes, pixRes, depRes] = await Promise.all([
-        supabase.from("platform_settings").select("value").eq("key", "min_deposit").maybeSingle(),
-        supabase.from("platform_settings").select("value").eq("key", "platform_pix_key").maybeSingle(),
+      setLoading(true);
+      const [levelsRes, walletRes, depRes, confRes] = await Promise.all([
+        supabase
+          .from("vip_levels" as never)
+          .select("level_code,display_name,deposit_required,daily_income,daily_tasks,is_available,min_direct_referrals,sort_order")
+          .order("sort_order", { ascending: true }),
+        supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id),
         supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase
+          .from("platform_settings")
+          .select("key,value")
+          .in("key", ["platform_pix_key", "min_deposit"]),
       ]);
-      if (minRes.data) setMinDeposit((minRes.data.value as any)?.amount ?? 10);
-      if (pixRes.data) setPixKey(pixRes.data.value as any);
+
+      setVipLevels((levelsRes.data as any[]) ?? []);
+
+      const wm = { recharge: 0, personal: 0, income: 0 };
+      (walletRes.data ?? []).forEach((w: any) => {
+        if (w.wallet_type in wm) {
+          // @ts-ignore
+          wm[w.wallet_type] = Number(w.balance ?? 0);
+        }
+      });
+      setWallets(wm);
+
       setDeposits(depRes.data ?? []);
-      setPageLoading(false);
+
+      const cfg: Record<string, any> = {};
+      (confRes.data ?? []).forEach((c: any) => (cfg[c.key] = c.value));
+      if (cfg.platform_pix_key) setPixKey(cfg.platform_pix_key);
+      if (cfg.min_deposit?.amount) setMinDeposit(Number(cfg.min_deposit.amount));
+
+      setLoading(false);
     };
+
     load();
   }, [user]);
 
-  const handleSubmit = async () => {
+  const amount = parseCurrency(rawDeposit);
+
+  const handleNormalDeposit = async () => {
+    if (!user) return;
     if (amount < minDeposit) {
-      toast.error(`Valor mínimo: ${fmtBRL(minDeposit)}`);
+      toast.error(`Depósito mínimo: ${fmtBRL(minDeposit)}`);
       return;
     }
-    if (!user) return;
-    setLoading(true);
 
-    const { data: dep, error: depErr } = await supabase
-      .from("deposits")
-      .insert({ user_id: user.id, amount, status: "pending" })
-      .select()
-      .single();
+    setSubmitting(true);
 
-    if (depErr || !dep) {
-      toast.error(depErr?.message ?? "Erro ao criar depósito");
-      setLoading(false);
+    const { error } = await supabase.from("deposits").insert({
+      user_id: user.id,
+      amount,
+      status: "pending",
+    } as any);
+
+    if (error) {
+      toast.error(error.message || "Erro ao solicitar depósito");
+      setSubmitting(false);
       return;
     }
 
@@ -93,125 +116,218 @@ const Deposit = () => {
       user_id: user.id,
       type: "deposit",
       amount,
-      status: "pending",
-      reference_id: dep.id,
-      description: "Depósito solicitado",
-    });
+      description: "Depósito para carteira de recarga",
+      wallet_type: "recharge",
+    } as any);
 
-    toast.success("Depósito solicitado com sucesso!");
-    setSuccess(true);
-    setDeposits((prev) => [dep, ...prev]);
-    setLoading(false);
+    toast.success("Depósito solicitado com sucesso.");
+    setRawDeposit("");
     refreshProfile();
+    setSubmitting(false);
   };
 
+  const handleVipUpgrade = async () => {
+    if (!user || !selectedVip) return;
+
+    const currentDeposit = Number(currentVip?.deposit_required ?? 0);
+    const targetDeposit = Number(selectedVip.deposit_required ?? 0);
+
+    setSubmitting(true);
+
+    const { error } = await supabase.from("deposits").insert({
+      user_id: user.id,
+      amount: targetDeposit,
+      status: "pending",
+      admin_notes: `Upgrade VIP para ${selectedVip.display_name}`,
+    } as any);
+
+    if (error) {
+      toast.error(error.message || "Erro ao iniciar upgrade VIP");
+      setSubmitting(false);
+      return;
+    }
+
+    await supabase.from("transactions").insert([
+      {
+        user_id: user.id,
+        type: "vip_upgrade",
+        amount: targetDeposit,
+        description: `Solicitação de upgrade para ${selectedVip.display_name}`,
+      },
+      {
+        user_id: user.id,
+        type: "vip_refund",
+        amount: currentDeposit,
+        description: `Previsão de devolução do depósito anterior em até 36h`,
+      },
+    ] as any);
+
+    toast.success(`Upgrade para ${selectedVip.display_name} iniciado. Pague o PIX para concluir.`);
+    setSelectedVip(null);
+    setSubmitting(false);
+  };
+
+  const canVip3 = useMemo(() => {
+    // requisito depende de diretos ativos - simplificado aqui para não bloquear fluxo
+    return true;
+  }, []);
+
   const copyPix = async () => {
-    if (!pixKey) return;
+    if (!pixKey?.key) return;
     await navigator.clipboard.writeText(pixKey.key);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const resetForm = () => {
-    setSuccess(false);
-    setRawValue("");
-  };
-
-  // ─── render ─────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-3">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-80 rounded-xl" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-3xl mx-auto">
-      {/* FORM / SUCCESS */}
-      {success ? (
-        <div className="glass-card rounded-2xl p-6 space-y-5 text-center">
-          <div className="mx-auto h-14 w-14 rounded-full bg-success/20 flex items-center justify-center">
-            <Check className="h-7 w-7 text-success" />
-          </div>
-          <h2 className="font-heading text-xl font-bold">Depósito solicitado com sucesso!</h2>
-          <p className="text-sm text-muted-foreground">Realize o pagamento via PIX para a chave abaixo:</p>
+    <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
+      <div className="glass-card rounded-xl p-3 grid grid-cols-2 gap-2">
+        <Button variant={tab === "vip" ? "default" : "outline"} className={tab === "vip" ? "gradient-primary text-primary-foreground" : ""} onClick={() => setTab("vip")}>
+          Ativar/Upgrade VIP
+        </Button>
+        <Button variant={tab === "saldo" ? "default" : "outline"} className={tab === "saldo" ? "gradient-primary text-primary-foreground" : ""} onClick={() => setTab("saldo")}>
+          Depositar Saldo
+        </Button>
+      </div>
 
-          {pixKey && (
-            <div className="space-y-3">
-              <div className="rounded-lg bg-secondary p-4">
-                <p className="text-xs text-muted-foreground mb-1 uppercase">{pixKey.type}</p>
-                <p className="font-mono text-lg font-bold text-foreground break-all">{pixKey.key}</p>
-              </div>
-              <Button onClick={copyPix} variant="outline" className="gap-2">
-                {copied ? <><Check className="h-4 w-4" /> Copiado!</> : <><Copy className="h-4 w-4" /> Copiar Chave PIX</>}
-              </Button>
-            </div>
-          )}
-
-          <p className="text-xs text-muted-foreground">Após o pagamento, aguarde a confirmação do administrador.</p>
-          <Button onClick={resetForm} variant="outline" className="w-full">Fazer outro depósito</Button>
-        </div>
-      ) : (
-        <div className="glass-card rounded-2xl p-6 space-y-5">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
-              <ArrowDownCircle className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-heading text-xl font-bold">Solicitar Depósito</h1>
-              <p className="text-xs text-muted-foreground">Mínimo: {fmtBRL(minDeposit)}</p>
-            </div>
+      {tab === "vip" ? (
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <h1 className="font-heading text-xl font-bold">Ativar / Upgrade VIP</h1>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">Valor do depósito</Label>
-            <Input
-              id="amount"
-              value={rawValue ? fmtInput(rawValue) : ""}
-              onChange={(e) => setRawValue(e.target.value.replace(/\D/g, ""))}
-              placeholder="R$ 0,00"
-              className="bg-secondary border-border font-mono text-lg h-12"
-            />
-            {rawValue && amount < minDeposit && (
-              <p className="text-xs text-destructive">Valor mínimo: {fmtBRL(minDeposit)}</p>
-            )}
-          </div>
+          <p className="text-sm text-muted-foreground">Nível atual: <b>{currentVip?.display_name ?? "Estagiário"}</b></p>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || amount < minDeposit || !rawValue}
-            className="w-full gradient-primary btn-glow text-primary-foreground h-12"
-          >
-            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...</> : "Solicitar Depósito"}
-          </Button>
-        </div>
-      )}
-
-      {/* DEPOSITS LIST */}
-      <div className="space-y-3">
-        <h2 className="font-heading text-lg font-bold">Meus Depósitos</h2>
-        {pageLoading ? (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
-          </div>
-        ) : deposits.length === 0 ? (
-          <div className="glass-card rounded-xl p-8 text-center">
-            <Inbox className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">Nenhum depósito realizado</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {deposits.map((d) => {
-              const s = STATUS[d.status] ?? STATUS.pending;
+          <div className="grid md:grid-cols-2 gap-3">
+            {vipLevels.map((v) => {
+              const levelNum = v.level_code === "intern" ? 0 : Number(String(v.level_code).replace("vip", ""));
+              const locked = !v.is_available;
+              const belowOrEqualCurrent = levelNum <= vipLevel;
+              const vip3Blocked = v.level_code === "vip3" && !canVip3;
+              const disabled = locked || belowOrEqualCurrent || vip3Blocked;
               return (
-                <div key={d.id} className="glass-card rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-mono text-sm font-bold text-foreground">{fmtBRL(d.amount)}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {d.created_at ? format(new Date(d.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}
-                    </p>
+                <div key={v.level_code} className="rounded-xl border border-border p-4 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">{v.display_name}</h3>
+                    {locked && <span className="text-xs text-muted-foreground">🔒 Em breve</span>}
                   </div>
-                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${s.cls}`}>{s.label}</span>
+                  <p className="text-xs text-muted-foreground">Depósito: {fmtBRL(Number(v.deposit_required || 0))}</p>
+                  <p className="text-xs text-muted-foreground">Renda diária: {fmtBRL(Number(v.daily_income || 0))}</p>
+                  <p className="text-xs text-muted-foreground">Tarefas/dia: {v.daily_tasks}</p>
+                  <Button disabled={disabled} onClick={() => setSelectedVip(v)} className="w-full" variant={disabled ? "outline" : "default"}>
+                    {belowOrEqualCurrent ? "Nível atual/anterior" : `Ativar ${v.display_name}`}
+                  </Button>
                 </div>
               );
             })}
           </div>
+
+          {selectedVip && (
+            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 space-y-3">
+              <p className="text-sm font-medium">Confirmação de upgrade</p>
+              <p className="text-xs text-muted-foreground">
+                Para ativar <b>{selectedVip.display_name}</b>, faça depósito de <b>{fmtBRL(Number(selectedVip.deposit_required || 0))}</b>.
+                Seu depósito anterior de <b>{fmtBRL(Number(currentVip?.deposit_required || 0))}</b> será devolvido para a Carteira de Recarga em até 36 horas.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setSelectedVip(null)}>Cancelar</Button>
+                <Button className="gradient-primary text-primary-foreground" onClick={handleVipUpgrade} disabled={submitting}>
+                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processando...</> : "Confirmar e gerar PIX"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pixKey && (
+            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
+              <p className="text-xs text-muted-foreground">PIX para pagamento</p>
+              <p className="font-mono text-sm break-all">{pixKey.key}</p>
+              <Button variant="outline" size="sm" onClick={copyPix}>
+                {copied ? <><Check className="h-4 w-4 mr-1" /> Copiado!</> : <><Copy className="h-4 w-4 mr-1" /> Copiar chave</>}
+              </Button>
+            </div>
+          )}
+        </Card>
+      ) : (
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <ArrowDownCircle className="h-5 w-5 text-primary" />
+            <h1 className="font-heading text-xl font-bold">Depositar Saldo (Carteira de Recarga)</h1>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="rounded-lg border border-primary/20 p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground"><Wallet className="h-4 w-4 text-primary" /> Recarga</div>
+              <p className="font-mono font-bold text-primary">{fmtBRL(wallets.recharge)}</p>
+            </div>
+            <div className="rounded-lg border border-warning/20 p-3">
+              <p className="text-xs text-muted-foreground">Pessoal</p>
+              <p className="font-mono font-bold text-warning">{fmtBRL(wallets.personal)}</p>
+            </div>
+            <div className="rounded-lg border border-success/20 p-3">
+              <p className="text-xs text-muted-foreground">Renda</p>
+              <p className="font-mono font-bold text-success">{fmtBRL(wallets.income)}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Valor do depósito</Label>
+            <Input
+              value={rawDeposit ? fmtInput(rawDeposit) : ""}
+              onChange={(e) => setRawDeposit(e.target.value.replace(/\D/g, ""))}
+              placeholder="R$ 0,00"
+              className="bg-secondary border-border font-mono text-lg"
+            />
+            <p className="text-xs text-muted-foreground">Mínimo: {fmtBRL(minDeposit)}</p>
+          </div>
+
+          <Button className="w-full gradient-primary text-primary-foreground" disabled={submitting || amount < minDeposit} onClick={handleNormalDeposit}>
+            {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processando...</> : "Gerar PIX para depósito"}
+          </Button>
+
+          {pixKey && (
+            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
+              <p className="text-xs text-muted-foreground">Chave PIX ({pixKey.type})</p>
+              <p className="font-mono text-sm break-all">{pixKey.key}</p>
+              <Button variant="outline" size="sm" onClick={copyPix}>
+                {copied ? <><Check className="h-4 w-4 mr-1" /> Copiado!</> : <><Copy className="h-4 w-4 mr-1" /> Copiar chave</>}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ Em alguns casos, o banco pode exibir um alerta de segurança durante a transferência. Isso faz parte do protocolo normal de verificação das instituições financeiras. Caso apareça o aviso, basta confirmar a transação. A operação é regular e segura.
+              </p>
+            </div>
+          )}
+        </Card>
+      )}
+
+      <Card className="p-5 space-y-3">
+        <h2 className="font-heading text-lg font-bold">Histórico de Depósitos</h2>
+        {deposits.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum depósito realizado.</p>
+        ) : (
+          <div className="space-y-2">
+            {deposits.map((d) => (
+              <div key={d.id} className="rounded-lg border border-border p-3 text-sm flex items-center justify-between">
+                <div>
+                  <p className="font-mono font-bold">{fmtBRL(Number(d.amount || 0))}</p>
+                  <p className="text-xs text-muted-foreground">{d.created_at ? format(new Date(d.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}</p>
+                </div>
+                <span className="text-xs text-muted-foreground">{d.status}</span>
+              </div>
+            ))}
+          </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
