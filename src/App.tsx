@@ -23,6 +23,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDeposits from "./pages/admin/AdminDeposits";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminVipLevels from "./pages/admin/AdminVipLevels";
+import AdminReports from "./pages/admin/AdminReports";
 import AdminLogs from "./pages/admin/AdminLogs";
 import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
@@ -73,6 +75,8 @@ const App = () => (
             <Route path="/admin/deposits" element={<AdminPage><AdminDeposits /></AdminPage>} />
             <Route path="/admin/withdrawals" element={<AdminPage><AdminWithdrawals /></AdminPage>} />
             <Route path="/admin/settings" element={<AdminPage><AdminSettings /></AdminPage>} />
+            <Route path="/admin/vip-levels" element={<AdminPage><AdminVipLevels /></AdminPage>} />
+            <Route path="/admin/reports" element={<AdminPage><AdminReports /></AdminPage>} />
             <Route path="/admin/logs" element={<AdminPage><AdminLogs /></AdminPage>} />
 
             <Route path="*" element={<NotFound />} />

@@ -8,6 +8,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Settings,
+  Crown,
   FileText,
   ArrowLeft,
   LogOut,
@@ -21,6 +22,8 @@ const adminNav = [
   { to: "/admin/deposits", icon: ArrowDownCircle, label: "Depósitos" },
   { to: "/admin/withdrawals", icon: ArrowUpCircle, label: "Saques" },
   { to: "/admin/settings", icon: Settings, label: "Configurações" },
+  { to: "/admin/vip-levels", icon: Crown, label: "Níveis VIP" },
+  { to: "/admin/reports", icon: FileText, label: "Relatórios" },
   { to: "/admin/logs", icon: FileText, label: "Logs" },
 ];
 
