@@ -120,6 +120,45 @@ export type Database = {
           },
         ]
       }
+      daily_tasks: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          reward_per_task: number
+          task_date: string
+          tasks_completed: number
+          tasks_required: number
+          total_earned: number
+          user_id: string
+          vip_level: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          reward_per_task?: number
+          task_date?: string
+          tasks_completed?: number
+          tasks_required?: number
+          total_earned?: number
+          user_id: string
+          vip_level: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          reward_per_task?: number
+          task_date?: string
+          tasks_completed?: number
+          tasks_required?: number
+          total_earned?: number
+          user_id?: string
+          vip_level?: string
+        }
+        Relationships: []
+      }
       deposits: {
         Row: {
           admin_notes: string | null
@@ -170,6 +209,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      investments: {
+        Row: {
+          duration_days: number
+          from_income: number | null
+          from_personal: number | null
+          from_recharge: number | null
+          id: string
+          interest_rate: number
+          matures_at: string
+          profit_amount: number
+          returned_at: string | null
+          started_at: string | null
+          status: string | null
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          duration_days: number
+          from_income?: number | null
+          from_personal?: number | null
+          from_recharge?: number | null
+          id?: string
+          interest_rate: number
+          matures_at: string
+          profit_amount?: number
+          returned_at?: string | null
+          started_at?: string | null
+          status?: string | null
+          total_amount: number
+          user_id: string
+        }
+        Update: {
+          duration_days?: number
+          from_income?: number | null
+          from_personal?: number | null
+          from_recharge?: number | null
+          id?: string
+          interest_rate?: number
+          matures_at?: string
+          profit_amount?: number
+          returned_at?: string | null
+          started_at?: string | null
+          status?: string | null
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
       }
       platform_settings: {
         Row: {
@@ -264,6 +372,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referral_tree: {
+        Row: {
+          id: string
+          is_active: boolean
+          joined_at: string
+          level_a_referrer: string | null
+          level_b_referrer: string | null
+          level_c_referrer: string | null
+          referral_code: string
+          referrer_id: string | null
+          user_id: string
+          vip_level: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          level_a_referrer?: string | null
+          level_b_referrer?: string | null
+          level_c_referrer?: string | null
+          referral_code?: string
+          referrer_id?: string | null
+          user_id: string
+          vip_level?: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          level_a_referrer?: string | null
+          level_b_referrer?: string | null
+          level_c_referrer?: string | null
+          referral_code?: string
+          referrer_id?: string | null
+          user_id?: string
+          vip_level?: string
+        }
+        Relationships: []
+      }
+      team_positions: {
+        Row: {
+          display_name: string
+          id: number
+          monthly_salary: number
+          position_code: string
+          required_direct_referrals: number | null
+          required_total_team: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          display_name: string
+          id?: number
+          monthly_salary?: number
+          position_code: string
+          required_direct_referrals?: number | null
+          required_total_team?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          display_name?: string
+          id?: number
+          monthly_salary?: number
+          position_code?: string
+          required_direct_referrals?: number | null
+          required_total_team?: number | null
+          sort_order?: number | null
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -425,10 +602,15 @@ export type Database = {
           fee: number | null
           id: string
           net_amount: number
+          payment_password_verified: boolean | null
           pix_key: string
           pix_key_type: string
+          processed_at: string | null
+          requested_at: string | null
           status: string
+          tax_amount: number | null
           user_id: string
+          wallet_type: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -439,10 +621,15 @@ export type Database = {
           fee?: number | null
           id?: string
           net_amount: number
+          payment_password_verified?: boolean | null
           pix_key: string
           pix_key_type: string
+          processed_at?: string | null
+          requested_at?: string | null
           status?: string
+          tax_amount?: number | null
           user_id: string
+          wallet_type?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -453,10 +640,15 @@ export type Database = {
           fee?: number | null
           id?: string
           net_amount?: number
+          payment_password_verified?: boolean | null
           pix_key?: string
           pix_key_type?: string
+          processed_at?: string | null
+          requested_at?: string | null
           status?: string
+          tax_amount?: number | null
           user_id?: string
+          wallet_type?: string | null
         }
         Relationships: [
           {
@@ -484,6 +676,7 @@ export type Database = {
         Args: { _payment_id: string; _user_id: string; _vip_plan_id: string }
         Returns: Json
       }
+      generate_referral_code_standalone: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
