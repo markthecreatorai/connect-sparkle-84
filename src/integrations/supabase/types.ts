@@ -692,6 +692,7 @@ export type Database = {
         Args: { _user_id: string; _vip_plan_id: string }
         Returns: Json
       }
+      validate_referral_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
