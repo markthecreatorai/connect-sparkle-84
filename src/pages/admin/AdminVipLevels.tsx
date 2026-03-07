@@ -38,9 +38,7 @@ const AdminVipLevels = () => {
   const save = async () => {
     setSaving(true);
     for (const r of rows) {
-      const { error } = await supabase
-        .from("vip_levels" as never)
-        .update({
+      const updateData: Record<string, unknown> = {
           display_name: r.display_name,
           deposit_required: Number(r.deposit_required || 0),
           daily_tasks: Number(r.daily_tasks || 0),
@@ -51,7 +49,10 @@ const AdminVipLevels = () => {
           min_direct_referrals: Number(r.min_direct_referrals || 0),
           is_available: !!r.is_available,
           sort_order: Number(r.sort_order || 0),
-        } as any)
+        };
+      const { error } = await (supabase
+        .from("vip_levels" as never) as any)
+        .update(updateData)
         .eq("id", r.id);
       if (error) {
         toast.error(error.message);
