@@ -147,7 +147,7 @@ async function recalculateVip(db: DB, userId: string) {
 
 // ─── APPROVE DEPOSIT ────────────────────────────────────────────
 
-async function approveDeposit(db: ReturnType<typeof createClient>, depositId: string, adminId: string) {
+async function approveDeposit(db: DB, depositId: string, adminId: string) {
   // 1. Fetch deposit
   const { data: deposit, error } = await db
     .from("deposits")
