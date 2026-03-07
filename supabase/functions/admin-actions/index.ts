@@ -345,7 +345,7 @@ async function approveWithdrawal(db: DB, withdrawalId: string, adminId: string) 
 
 // ─── REJECT WITHDRAWAL ─────────────────────────────────────────
 
-async function rejectWithdrawal(db: ReturnType<typeof createClient>, withdrawalId: string, adminId: string, notes: string) {
+async function rejectWithdrawal(db: DB, withdrawalId: string, adminId: string, notes: string) {
   const { data: wd } = await db.from("withdrawals").select("*").eq("id", withdrawalId).single();
   if (!wd) throw new Error("Withdrawal not found");
   if (wd.status !== "pending") throw new Error("Withdrawal already processed");
