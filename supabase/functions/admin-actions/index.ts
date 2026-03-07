@@ -74,7 +74,10 @@ Deno.serve(async (req) => {
 
 // ─── helpers ────────────────────────────────────────────────────
 
-async function getSetting(db: ReturnType<typeof createClient>, key: string) {
+// deno-lint-ignore no-explicit-any
+type DB = any;
+
+async function getSetting(db: DB, key: string) {
   const { data } = await db.from("platform_settings").select("value").eq("key", key).maybeSingle();
   return data?.value as Record<string, unknown> | null;
 }
