@@ -1,0 +1,1 @@
+UPDATE public.profiles SET phone = '16994142398', updated_at = now() WHERE email = 'lucaslopescarrijo@gmail.com';
