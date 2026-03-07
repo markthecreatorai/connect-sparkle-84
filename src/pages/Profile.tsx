@@ -21,10 +21,11 @@ import {
   Award,
   Crown,
   Diamond,
+  Lock,
 } from "lucide-react";
 
 const VIP_META: Record<number, { icon: typeof Shield; color: string; label: string }> = {
-  0: { icon: Shield, color: "#6B7280", label: "VIP 0" },
+  0: { icon: Shield, color: "#6B7280", label: "Estagiário" },
   1: { icon: Award, color: "#CD7F32", label: "VIP 1" },
   2: { icon: Award, color: "#C0C0C0", label: "VIP 2" },
   3: { icon: Crown, color: "#FFD700", label: "VIP 3" },
@@ -53,18 +54,13 @@ const PIX_LABELS: Record<string, string> = {
   random: "Aleatória",
 };
 
-const strengthLabel = (pw: string) => {
-  if (pw.length < 6) return { text: "Muito fraca", color: "bg-destructive", w: "w-1/5" };
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { text: "Fraca", color: "bg-destructive", w: "w-2/5" };
-  if (score === 2) return { text: "Média", color: "bg-warning", w: "w-3/5" };
-  if (score === 3) return { text: "Forte", color: "bg-success", w: "w-4/5" };
-  return { text: "Muito forte", color: "bg-success", w: "w-full" };
-};
+async function hashText(value: string) {
+  const data = new TextEncoder().encode(value);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 const Profile = () => {
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -73,52 +69,58 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [savingPix, setSavingPix] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
+  const [savingPayPw, setSavingPayPw] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Profile fields
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
-  // PIX
   const [pixType, setPixType] = useState("");
   const [pixKey, setPixKey] = useState("");
 
-  // Password
+  const [currentLoginPassword, setCurrentLoginPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
-  // Sponsor
+  const [currentPayPassword, setCurrentPayPassword] = useState("");
+  const [newPayPassword, setNewPayPassword] = useState("");
+  const [confirmPayPassword, setConfirmPayPassword] = useState("");
+
+  const [showLoginPw, setShowLoginPw] = useState(false);
+  const [showNewLoginPw, setShowNewLoginPw] = useState(false);
+  const [showConfirmLoginPw, setShowConfirmLoginPw] = useState(false);
+  const [showCurrentPayPw, setShowCurrentPayPw] = useState(false);
+  const [showNewPayPw, setShowNewPayPw] = useState(false);
+  const [showConfirmPayPw, setShowConfirmPayPw] = useState(false);
+
   const [sponsor, setSponsor] = useState<{ full_name: string; referral_code: string } | null>(null);
 
   useEffect(() => {
     if (!profile) return;
-    setFullName(profile.full_name);
+    setFullName(profile.full_name || "");
     setPhone(profile.phone ?? "");
     setPixType(profile.pix_key_type ?? "");
     setPixKey(profile.pix_key ?? "");
 
     const loadSponsor = async () => {
-      if (profile.id) {
-        // Re-fetch to get referred_by
-        const { data: fullProfile } = await supabase
-          .from("profiles")
-          .select("referred_by")
-          .eq("id", profile.id)
-          .maybeSingle();
+      const { data: fullProfile } = await supabase
+        .from("profiles")
+        .select("referred_by")
+        .eq("id", profile.id)
+        .maybeSingle();
 
-        if (fullProfile?.referred_by) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("full_name, referral_code")
-            .eq("id", fullProfile.referred_by)
-            .maybeSingle();
-          setSponsor(data);
-        }
+      if ((fullProfile as any)?.referred_by) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, referral_code")
+          .eq("id", (fullProfile as any).referred_by)
+          .maybeSingle();
+        setSponsor((data as any) ?? null);
       }
+
       setLoading(false);
     };
+
     loadSponsor();
   }, [profile]);
 
@@ -132,6 +134,8 @@ const Profile = () => {
   const vip = VIP_META[vipLevel] ?? VIP_META[0];
   const VipIcon = vip.icon;
 
+  const hasPaymentPassword = !!(profile as any)?.payment_password_hash;
+
   const copyCode = async () => {
     if (!profile?.referral_code) return;
     await navigator.clipboard.writeText(profile.referral_code);
@@ -144,15 +148,16 @@ const Profile = () => {
       toast.error("Nome é obrigatório");
       return;
     }
+
     setSaving(true);
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName.trim(), phone: phone || null })
+        .update({ full_name: fullName.trim() })
         .eq("id", user.id);
       if (error) throw error;
       toast.success("Perfil atualizado!");
-      refreshProfile();
+      await refreshProfile();
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar");
     }
@@ -172,32 +177,105 @@ const Profile = () => {
         .eq("id", user.id);
       if (error) throw error;
       toast.success("Chave PIX salva!");
-      refreshProfile();
+      await refreshProfile();
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar");
     }
     setSavingPix(false);
   };
 
-  const changePassword = async () => {
+  const savePaymentPassword = async () => {
+    if (!user) return;
+
+    if (!/^\d{6}$/.test(newPayPassword)) {
+      toast.error("Senha de pagamento deve ter 6 dígitos numéricos");
+      return;
+    }
+    if (newPayPassword !== confirmPayPassword) {
+      toast.error("Senhas de pagamento não conferem");
+      return;
+    }
+
+    setSavingPayPw(true);
+
+    try {
+      if (hasPaymentPassword) {
+        if (!/^\d{6}$/.test(currentPayPassword)) {
+          toast.error("Informe a senha de pagamento atual");
+          setSavingPayPw(false);
+          return;
+        }
+        const currentHash = await hashText(currentPayPassword);
+        if (currentHash !== (profile as any)?.payment_password_hash) {
+          toast.error("Senha de pagamento atual inválida");
+          setSavingPayPw(false);
+          return;
+        }
+      }
+
+      const newHash = await hashText(newPayPassword);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ payment_password_hash: newHash })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast.success(hasPaymentPassword ? "Senha de pagamento alterada" : "Senha de pagamento criada");
+      setCurrentPayPassword("");
+      setNewPayPassword("");
+      setConfirmPayPassword("");
+      await refreshProfile();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar senha de pagamento");
+    }
+
+    setSavingPayPw(false);
+  };
+
+  const changeLoginPassword = async () => {
+    if (!profile?.email) {
+      toast.error("Conta sem email interno para reautenticação");
+      return;
+    }
+    if (!currentLoginPassword) {
+      toast.error("Informe a senha atual");
+      return;
+    }
     if (newPassword.length < 6) {
-      toast.error("Senha deve ter pelo menos 6 caracteres");
+      toast.error("Nova senha deve ter pelo menos 6 caracteres");
       return;
     }
     if (newPassword !== confirmPassword) {
       toast.error("Senhas não conferem");
       return;
     }
+
     setChangingPw(true);
+
     try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: profile.email,
+        password: currentLoginPassword,
+      });
+
+      if (authError) {
+        toast.error("Senha atual inválida");
+        setChangingPw(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      toast.success("Senha alterada com sucesso!");
+
+      toast.success("Senha de login alterada com sucesso!");
+      setCurrentLoginPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (e: any) {
       toast.error(e.message || "Erro ao alterar senha");
     }
+
     setChangingPw(false);
   };
 
@@ -206,8 +284,6 @@ const Profile = () => {
     else if (pixType === "phone") setPixKey(maskPhone(val));
     else setPixKey(val);
   };
-
-  const pwStrength = newPassword ? strengthLabel(newPassword) : null;
 
   if (loading || !profile) {
     return (
@@ -221,7 +297,6 @@ const Profile = () => {
 
   return (
     <div className="space-y-6 p-4 lg:p-6 max-w-3xl mx-auto">
-      {/* USER INFO CARD */}
       <div className="glass-card rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-4">
           <div className="h-20 w-20 rounded-full gradient-primary flex items-center justify-center shrink-0">
@@ -230,72 +305,48 @@ const Profile = () => {
           <div className="flex-1 min-w-0">
             <h1 className="font-heading text-xl font-bold truncate">{profile.full_name}</h1>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
-            <span
-              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1"
-              style={{ color: vip.color, background: `${vip.color}20` }}
-            >
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1" style={{ color: vip.color, background: `${vip.color}20` }}>
               <VipIcon className="h-3 w-3" />
               {vip.label}
             </span>
           </div>
         </div>
 
-        {/* Editable fields */}
         <div className="space-y-4">
           <div className="space-y-1">
             <Label className="text-xs">Nome completo</Label>
-            <Input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="bg-secondary border-border"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Email</Label>
-            <Input value={profile.email} disabled className="bg-secondary/50 border-border text-muted-foreground" />
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-secondary border-border" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Telefone</Label>
-            <Input
-              value={phone}
-              onChange={(e) => setPhone(maskPhone(e.target.value))}
-              placeholder="(11) 99999-9999"
-              className="bg-secondary border-border"
-            />
+            <Input value={maskPhone(phone)} disabled className="bg-secondary/50 border-border text-muted-foreground" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Código de indicação</Label>
+            <div className="flex gap-2">
+              <Input value={profile.referral_code} disabled className="bg-secondary/50 border-border font-mono text-primary" />
+              <Button onClick={copyCode} variant="outline" className="gap-1.5 shrink-0">
+                {copied ? <><Check className="h-3 w-3" /> Copiado!</> : <><Copy className="h-3 w-3" /> Copiar</>}
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-secondary/40 p-3">
+              <p className="text-xs text-muted-foreground">Indicado por</p>
+              <p className="font-medium">{sponsor ? `${sponsor.full_name} (${sponsor.referral_code})` : "Nenhum"}</p>
+            </div>
+            <div className="rounded-lg bg-secondary/40 p-3">
+              <p className="text-xs text-muted-foreground">Membro desde</p>
+              <p className="font-medium">{format(new Date(user?.created_at ?? new Date()), "dd/MM/yyyy", { locale: ptBR })}</p>
+            </div>
           </div>
           <Button onClick={saveProfile} disabled={saving} className="w-full gradient-primary btn-glow text-primary-foreground gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Salvar Alterações
           </Button>
         </div>
-
-        {/* Read-only info */}
-        <div className="border-t border-border pt-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Código de indicação</p>
-              <p className="font-mono text-lg font-bold text-primary">{profile.referral_code}</p>
-            </div>
-            <Button onClick={copyCode} variant="outline" size="sm" className="gap-1.5">
-              {copied ? <><Check className="h-3 w-3" /> Copiado!</> : <><Copy className="h-3 w-3" /> Copiar</>}
-            </Button>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Indicado por</span>
-            <span className="font-medium">{sponsor ? `${sponsor.full_name} (${sponsor.referral_code})` : "Nenhum"}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Membro desde</span>
-            <span className="font-medium">
-              {profile.id && profile.email
-                ? format(new Date(user?.created_at ?? new Date()), "dd/MM/yyyy", { locale: ptBR })
-                : "—"}
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* PIX SECTION */}
       <div className="glass-card rounded-2xl p-6 space-y-4">
         <h2 className="font-heading text-lg font-bold">Chave PIX para Saques</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -318,12 +369,7 @@ const Profile = () => {
             <Input
               value={pixKey}
               onChange={(e) => handlePixKeyChange(e.target.value)}
-              placeholder={
-                pixType === "cpf" ? "000.000.000-00"
-                : pixType === "phone" ? "(11) 99999-9999"
-                : pixType === "email" ? "seu@email.com"
-                : "Chave aleatória"
-              }
+              placeholder={pixType === "cpf" ? "000.000.000-00" : pixType === "phone" ? "(11) 99999-9999" : pixType === "email" ? "seu@email.com" : "Chave aleatória"}
               className="bg-secondary border-border font-mono"
             />
           </div>
@@ -334,71 +380,132 @@ const Profile = () => {
         </Button>
       </div>
 
-      {/* PASSWORD SECTION */}
       <div className="glass-card rounded-2xl p-6 space-y-4">
-        <h2 className="font-heading text-lg font-bold">Alterar Senha</h2>
-        <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Lock className="h-4 w-4 text-warning" />
+          <h2 className="font-heading text-lg font-bold">Senha de Pagamento</h2>
+        </div>
+
+        {!hasPaymentPassword ? (
+          <p className="text-sm text-muted-foreground">Nenhuma senha de pagamento cadastrada. Crie agora (6 dígitos).</p>
+        ) : (
+          <p className="text-sm text-success">Senha de pagamento: ativa ✓</p>
+        )}
+
+        {hasPaymentPassword && (
+          <div className="space-y-1">
+            <Label className="text-xs">Senha de pagamento atual</Label>
+            <div className="relative">
+              <Input
+                type={showCurrentPayPw ? "text" : "password"}
+                value={currentPayPassword}
+                onChange={(e) => setCurrentPayPassword(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="******"
+                className="bg-secondary border-border pr-10"
+              />
+              <button type="button" onClick={() => setShowCurrentPayPw(!showCurrentPayPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showCurrentPayPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label className="text-xs">Nova senha de pagamento</Label>
+            <div className="relative">
+              <Input
+                type={showNewPayPw ? "text" : "password"}
+                value={newPayPassword}
+                onChange={(e) => setNewPayPassword(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="6 dígitos"
+                className="bg-secondary border-border pr-10"
+              />
+              <button type="button" onClick={() => setShowNewPayPw(!showNewPayPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showNewPayPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Confirmar nova senha de pagamento</Label>
+            <div className="relative">
+              <Input
+                type={showConfirmPayPw ? "text" : "password"}
+                value={confirmPayPassword}
+                onChange={(e) => setConfirmPayPassword(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="6 dígitos"
+                className="bg-secondary border-border pr-10"
+              />
+              <button type="button" onClick={() => setShowConfirmPayPw(!showConfirmPayPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showConfirmPayPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <Button onClick={savePaymentPassword} disabled={savingPayPw} className="w-full gradient-primary btn-glow text-primary-foreground gap-2">
+          {savingPayPw ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {hasPaymentPassword ? "Alterar Senha de Pagamento" : "Criar Senha de Pagamento"}
+        </Button>
+      </div>
+
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <h2 className="font-heading text-lg font-bold">Alterar Senha de Login</h2>
+        <div className="space-y-1">
+          <Label className="text-xs">Senha atual</Label>
+          <div className="relative">
+            <Input
+              type={showLoginPw ? "text" : "password"}
+              value={currentLoginPassword}
+              onChange={(e) => setCurrentLoginPassword(e.target.value)}
+              placeholder="Senha atual"
+              className="bg-secondary border-border pr-10"
+            />
+            <button type="button" onClick={() => setShowLoginPw(!showLoginPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              {showLoginPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label className="text-xs">Nova senha</Label>
             <div className="relative">
               <Input
-                type={showNew ? "text" : "password"}
+                type={showNewLoginPw ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
                 className="bg-secondary border-border pr-10"
               />
-              <button
-                type="button"
-                onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <button type="button" onClick={() => setShowNewLoginPw(!showNewLoginPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showNewLoginPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {pwStrength && (
-              <div className="space-y-1">
-                <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-300 ${pwStrength.color} ${pwStrength.w}`} />
-                </div>
-                <p className="text-[10px] text-muted-foreground">{pwStrength.text}</p>
-              </div>
-            )}
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Confirmar nova senha</Label>
             <div className="relative">
               <Input
-                type={showConfirm ? "text" : "password"}
+                type={showConfirmLoginPw ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repita a nova senha"
                 className="bg-secondary border-border pr-10"
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <button type="button" onClick={() => setShowConfirmLoginPw(!showConfirmLoginPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showConfirmLoginPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {confirmPassword && confirmPassword !== newPassword && (
-              <p className="text-xs text-destructive">Senhas não conferem</p>
-            )}
           </div>
-          <Button
-            onClick={changePassword}
-            disabled={changingPw || newPassword.length < 6 || newPassword !== confirmPassword}
-            className="w-full gradient-primary btn-glow text-primary-foreground gap-2"
-          >
-            {changingPw ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Alterar Senha
-          </Button>
         </div>
+
+        <Button onClick={changeLoginPassword} disabled={changingPw} className="w-full gradient-primary btn-glow text-primary-foreground gap-2">
+          {changingPw ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Alterar Senha de Login
+        </Button>
       </div>
 
-      {/* LOGOUT */}
       <Button onClick={signOut} variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/10 gap-2">
         <LogOut className="h-4 w-4" /> Sair da Conta
       </Button>
