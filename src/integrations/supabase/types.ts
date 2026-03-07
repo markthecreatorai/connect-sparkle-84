@@ -265,6 +265,45 @@ export type Database = {
           },
         ]
       }
+      referral_tree: {
+        Row: {
+          id: string
+          is_active: boolean
+          joined_at: string
+          level_a_referrer: string | null
+          level_b_referrer: string | null
+          level_c_referrer: string | null
+          referral_code: string
+          referrer_id: string | null
+          user_id: string
+          vip_level: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          level_a_referrer?: string | null
+          level_b_referrer?: string | null
+          level_c_referrer?: string | null
+          referral_code?: string
+          referrer_id?: string | null
+          user_id: string
+          vip_level?: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          level_a_referrer?: string | null
+          level_b_referrer?: string | null
+          level_c_referrer?: string | null
+          referral_code?: string
+          referrer_id?: string | null
+          user_id?: string
+          vip_level?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -484,6 +523,7 @@ export type Database = {
         Args: { _payment_id: string; _user_id: string; _vip_plan_id: string }
         Returns: Json
       }
+      generate_referral_code_standalone: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
