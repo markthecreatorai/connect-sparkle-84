@@ -271,7 +271,7 @@ async function approveDeposit(db: DB, depositId: string, adminId: string) {
 
 // ─── REJECT DEPOSIT ─────────────────────────────────────────────
 
-async function rejectDeposit(db: ReturnType<typeof createClient>, depositId: string, adminId: string, notes: string) {
+async function rejectDeposit(db: DB, depositId: string, adminId: string, notes: string) {
   const { data: deposit } = await db.from("deposits").select("*").eq("id", depositId).single();
   if (!deposit) throw new Error("Deposit not found");
   if (deposit.status !== "pending") throw new Error("Deposit already processed");
