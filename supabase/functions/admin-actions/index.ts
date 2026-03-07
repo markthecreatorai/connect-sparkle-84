@@ -102,7 +102,7 @@ async function recalculateVip(db: DB, userId: string) {
 
   if (!referrals || referrals.length === 0) return;
 
-  const referralIds = referrals.map((r) => r.id);
+  const referralIds = referrals.map((r: { id: string }) => r.id);
 
   // Check which have approved deposits
   const { data: depositsData } = await db
