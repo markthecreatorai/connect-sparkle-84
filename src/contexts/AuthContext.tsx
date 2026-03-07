@@ -14,7 +14,7 @@ interface Profile {
   is_active: boolean | null;
   pix_key: string | null;
   pix_key_type: string | null;
-  payment_password_hash: string | null;
+  
   referred_by: string | null;
   created_at: string | null;
 }

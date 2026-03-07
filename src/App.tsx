@@ -29,7 +29,6 @@ import AdminReports from "./pages/admin/AdminReports";
 import AdminLogs from "./pages/admin/AdminLogs";
 import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
-import Tasks from "./pages/Tasks";
 
 const queryClient = new QueryClient();
 

@@ -462,7 +462,7 @@ const Dashboard = () => {
             <RotateCw className="h-4 w-4 text-warning" />
             <p className="text-sm font-semibold">Girar o Escudo 🛡️</p>
           </div>
-          <Button onClick={doSpin} disabled={spinDone} className="gradient-primary text-primary-foreground">
+          <Button onClick={() => toast("Spin em breve!")} disabled={spinDone} className="gradient-primary text-primary-foreground">
             {spinDone ? "Já girou hoje" : "Girar!"}
           </Button>
           <p className="text-xs text-muted-foreground">Disponível 1x por dia</p>
