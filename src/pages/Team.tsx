@@ -1,504 +1,285 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Users,
-  Shield,
-  Award,
-  Crown,
-  Diamond,
-  CheckCircle,
-  XCircle,
-  UserPlus,
-  Network,
-  TrendingUp,
-  ChevronDown,
-} from "lucide-react";
+import { Users, UserPlus, Network, Crown, Copy, Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const VIP_META: Record<number, { icon: typeof Shield; color: string; label: string }> = {
-  0: { icon: Shield, color: "#6B7280", label: "VIP 0" },
-  1: { icon: Shield, color: "#6b7280", label: "VIP 1" },
-  2: { icon: Award, color: "#3b82f6", label: "VIP 2" },
-  3: { icon: Award, color: "#06b6d4", label: "VIP 3" },
-  4: { icon: Crown, color: "#8b5cf6", label: "VIP 4" },
-  5: { icon: Crown, color: "#ef4444", label: "VIP 5" },
-  6: { icon: Diamond, color: "#f97316", label: "VIP 6" },
-  7: { icon: Diamond, color: "#eab308", label: "VIP 7" },
-  8: { icon: Diamond, color: "#f5c842", label: "VIP 8" },
-  9: { icon: Diamond, color: "#ffffff", label: "VIP 9" },
-};
-
-interface Referral {
-  id: string;
+type Member = {
+  user_id: string;
   full_name: string;
-  created_at: string | null;
   vip_level: number | null;
   is_active: boolean | null;
-  has_approved_deposit: boolean;
-}
-
-interface CommissionEntry {
-  id: string;
-  amount: number;
-  level: number;
   created_at: string | null;
-  source_user_id: string;
-  source_name: string;
-  vip_plan_name: string;
-}
-
-const maskName = (name: string): string => {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((word) => {
-      if (word.length <= 2) return word;
-      return word[0] + "**" + word[word.length - 1];
-    })
-    .join(" ");
 };
 
-const censorName = (name: string) => {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length <= 1) return parts[0] ?? "";
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+type Position = {
+  id: number;
+  position_code: string;
+  display_name: string;
+  required_direct_referrals: number;
+  required_total_team: number;
+  monthly_salary: number;
+  sort_order: number;
 };
-
-const getInitials = (name: string) =>
-  name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
-
-const LEVEL_CONFIG = [
-  { key: 1, label: "Nível A", sublabel: "Diretos", color: "#22c55e", icon: UserPlus },
-  { key: 2, label: "Nível B", sublabel: "Indiretos", color: "#3b82f6", icon: Users },
-  { key: 3, label: "Nível C", sublabel: "Rede", color: "#8b5cf6", icon: Network },
-] as const;
-
-const PAGE_SIZE = 20;
 
 const Team = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [n1, setN1] = useState<Referral[]>([]);
-  const [n2, setN2] = useState<Referral[]>([]);
-  const [n3, setN3] = useState<Referral[]>([]);
-  const [commSummary, setCommSummary] = useState<{ total: number; count: number }[]>([
-    { total: 0, count: 0 },
-    { total: 0, count: 0 },
-    { total: 0, count: 0 },
-  ]);
-  const [commTotal, setCommTotal] = useState(0);
-  const [history, setHistory] = useState<CommissionEntry[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const [page, setPage] = useState(0);
 
-  const fetchHistory = useCallback(
-    async (pageNum: number) => {
-      if (!user) return;
-      setHistoryLoading(true);
-      const from = pageNum * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
+  const [n1, setN1] = useState<Member[]>([]);
+  const [n2, setN2] = useState<Member[]>([]);
+  const [n3, setN3] = useState<Member[]>([]);
 
-      const { data: comms } = await supabase
-        .from("commissions")
-        .select("id, amount, level, created_at, source_user_id, vip_plan_id")
-        .eq("beneficiary_id", user.id)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (!comms || comms.length === 0) {
-        setHasMore(false);
-        setHistoryLoading(false);
-        return;
-      }
-
-      // Fetch source user names
-      const sourceIds = [...new Set(comms.map((c) => c.source_user_id))];
-      const { data: sourceProfiles } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", sourceIds);
-      const nameMap: Record<string, string> = {};
-      (sourceProfiles ?? []).forEach((p) => (nameMap[p.id] = p.full_name));
-
-      // Fetch vip plan names
-      const planIds = [...new Set(comms.filter((c) => c.vip_plan_id).map((c) => c.vip_plan_id!))];
-      let planMap: Record<string, string> = {};
-      if (planIds.length > 0) {
-        const { data: plans } = await supabase
-          .from("vip_plans")
-          .select("id, name")
-          .in("id", planIds);
-        (plans ?? []).forEach((p) => (planMap[p.id] = p.name));
-      }
-
-      const entries: CommissionEntry[] = comms.map((c) => ({
-        id: c.id,
-        amount: Number(c.amount),
-        level: c.level,
-        created_at: c.created_at,
-        source_user_id: c.source_user_id,
-        source_name: nameMap[c.source_user_id] ?? "Usuário",
-        vip_plan_name: c.vip_plan_id ? planMap[c.vip_plan_id] ?? "VIP" : "VIP",
-      }));
-
-      setHistory((prev) => (pageNum === 0 ? entries : [...prev, ...entries]));
-      setHasMore(comms.length === PAGE_SIZE);
-      setHistoryLoading(false);
-    },
-    [user]
-  );
+  const [commByLevel, setCommByLevel] = useState({ n1: 0, n2: 0, n3: 0, total: 0 });
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [currentPosition, setCurrentPosition] = useState<Position | null>(null);
 
   useEffect(() => {
     if (!user) return;
+
     const load = async () => {
-      // Fetch N1
-      const { data: n1Raw } = await supabase
-        .from("profiles")
-        .select("id, full_name, created_at, vip_level, is_active")
-        .eq("referred_by", user.id)
-        .order("created_at", { ascending: false });
+      setLoading(true);
 
-      const n1Data = n1Raw ?? [];
-      const n1Ids = n1Data.map((p) => p.id);
+      const [treeRes, profilesRes, txRes, posRes] = await Promise.all([
+        supabase
+          .from("referral_tree" as never)
+          .select("user_id, level_a_referrer, level_b_referrer, level_c_referrer")
+          .or(`level_a_referrer.eq.${user.id},level_b_referrer.eq.${user.id},level_c_referrer.eq.${user.id}`),
+        supabase.from("profiles").select("id, full_name, vip_level, is_active, created_at"),
+        supabase
+          .from("transactions")
+          .select("amount, metadata, type")
+          .eq("user_id", user.id)
+          .in("type", ["referral_deposit_commission", "referral_task_commission"]),
+        supabase
+          .from("team_positions" as never)
+          .select("id, position_code, display_name, required_direct_referrals, required_total_team, monthly_salary, sort_order")
+          .order("sort_order", { ascending: true }),
+      ]);
 
-      // Fetch N2
-      let n2Data: typeof n1Data = [];
-      let n2Ids: string[] = [];
-      if (n1Ids.length > 0) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("id, full_name, created_at, vip_level, is_active")
-          .in("referred_by", n1Ids)
-          .order("created_at", { ascending: false });
-        n2Data = data ?? [];
-        n2Ids = n2Data.map((p) => p.id);
-      }
+      const tree = (treeRes.data as any[]) ?? [];
+      const pMap = new Map<string, any>(((profilesRes.data as any[]) ?? []).map((p) => [p.id, p]));
 
-      // Fetch N3
-      let n3Data: typeof n1Data = [];
-      if (n2Ids.length > 0) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("id, full_name, created_at, vip_level, is_active")
-          .in("referred_by", n2Ids)
-          .order("created_at", { ascending: false });
-        n3Data = data ?? [];
-      }
+      const mapMember = (id: string): Member => {
+        const p = pMap.get(id);
+        return {
+          user_id: id,
+          full_name: p?.full_name ?? "Usuário",
+          vip_level: p?.vip_level ?? 0,
+          is_active: p?.is_active ?? true,
+          created_at: p?.created_at ?? null,
+        };
+      };
 
-      // Check approved deposits
-      const allIds = [...n1Ids, ...n2Ids, ...n3Data.map((p) => p.id)];
-      let depositMap: Record<string, boolean> = {};
-      if (allIds.length > 0) {
-        const { data: deps } = await supabase
-          .from("deposits")
-          .select("user_id")
-          .in("user_id", allIds)
-          .eq("status", "approved");
-        const approvedSet = new Set((deps ?? []).map((d) => d.user_id));
-        allIds.forEach((id) => (depositMap[id] = approvedSet.has(id)));
-      }
+      const n1Ids = tree.filter((r) => r.level_a_referrer === user.id).map((r) => r.user_id);
+      const n2Ids = tree.filter((r) => r.level_b_referrer === user.id).map((r) => r.user_id);
+      const n3Ids = tree.filter((r) => r.level_c_referrer === user.id).map((r) => r.user_id);
 
-      const enrich = (arr: typeof n1Data): Referral[] =>
-        arr.map((p) => ({ ...p, has_approved_deposit: !!depositMap[p.id] }));
+      setN1([...new Set(n1Ids)].map(mapMember));
+      setN2([...new Set(n2Ids)].map(mapMember));
+      setN3([...new Set(n3Ids)].map(mapMember));
 
-      setN1(enrich(n1Data));
-      setN2(enrich(n2Data));
-      setN3(enrich(n3Data));
-
-      // Fetch commission summary
-      const { data: comms } = await supabase
-        .from("commissions")
-        .select("level, amount")
-        .eq("beneficiary_id", user.id);
-
-      const summary = [
-        { total: 0, count: 0 },
-        { total: 0, count: 0 },
-        { total: 0, count: 0 },
-      ];
-      let total = 0;
-      (comms ?? []).forEach((cm) => {
-        const amt = Number(cm.amount);
-        total += amt;
-        const idx = cm.level - 1;
-        if (idx >= 0 && idx < 3) {
-          summary[idx].total += amt;
-          summary[idx].count += 1;
-        }
+      let n1v = 0,
+        n2v = 0,
+        n3v = 0;
+      ((txRes.data as any[]) ?? []).forEach((t) => {
+        const amount = Number(t.amount || 0);
+        const level = String(t?.metadata?.level || "").toUpperCase();
+        if (level === "A") n1v += amount;
+        else if (level === "B") n2v += amount;
+        else if (level === "C") n3v += amount;
       });
-      setCommSummary(summary);
-      setCommTotal(total);
+      setCommByLevel({ n1: n1v, n2: n2v, n3: n3v, total: n1v + n2v + n3v });
+
+      const pos = (posRes.data as Position[]) ?? [];
+      setPositions(pos);
+
+      const totalTeam = new Set([...n1Ids, ...n2Ids, ...n3Ids]).size;
+      const direct = new Set(n1Ids).size;
+
+      const qualified = pos.filter(
+        (p) => direct >= Number(p.required_direct_referrals || 0) && totalTeam >= Number(p.required_total_team || 0)
+      );
+      setCurrentPosition(qualified.length ? qualified[qualified.length - 1] : null);
+
       setLoading(false);
     };
+
     load();
-    fetchHistory(0);
-  }, [user, fetchHistory]);
+  }, [user]);
 
-  const loadMore = () => {
-    const next = page + 1;
-    setPage(next);
-    fetchHistory(next);
+  const totalTeam = useMemo(() => new Set([...n1.map((m) => m.user_id), ...n2.map((m) => m.user_id), ...n3.map((m) => m.user_id)]).size, [n1, n2, n3]);
+
+  const referralLink = useMemo(() => {
+    const code = profile?.referral_code || "";
+    return `${window.location.origin}/register?ref=${code}`;
+  }, [profile?.referral_code]);
+
+  const qrUrl = useMemo(() => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(referralLink)}`;
+  }, [referralLink]);
+
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(profile?.referral_code || "");
+    toast.success("Código copiado");
   };
 
-  const totalNetwork = n1.length + n2.length + n3.length;
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(referralLink);
+    toast.success("Link copiado");
+  };
 
-  const ReferralCard = ({ r }: { r: Referral }) => {
-    const vip = VIP_META[r.vip_level ?? 0] ?? VIP_META[0];
-    const VipIcon = vip.icon;
+  const nativeShare = async () => {
+    try {
+      // @ts-ignore
+      if (navigator.share) {
+        // @ts-ignore
+        await navigator.share({ title: "Meu convite", text: "Cadastre-se com meu código", url: referralLink });
+      } else {
+        await copyLink();
+      }
+    } catch {}
+  };
+
+  const MemberList = ({ rows }: { rows: Member[] }) => {
+    if (!rows.length) {
+      return (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Nenhum indicado neste nível. Compartilhe seu link para crescer sua rede!
+        </Card>
+      );
+    }
+
     return (
-      <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center shrink-0">
-          <span className="text-xs font-bold text-primary-foreground">{getInitials(r.full_name)}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium truncate">{censorName(r.full_name)}</p>
-            <span
-              className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-              style={{ color: vip.color, background: `${vip.color}20` }}
-            >
-              <VipIcon className="h-2.5 w-2.5" />
-              {vip.label}
-            </span>
-          </div>
-          <p className="text-[10px] text-muted-foreground">
-            {r.created_at ? format(new Date(r.created_at), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {r.has_approved_deposit ? (
-            <CheckCircle className="h-4 w-4 text-success" />
-          ) : (
-            <XCircle className="h-4 w-4 text-muted-foreground" />
-          )}
-          <span
-            className={`h-2 w-2 rounded-full ${r.is_active ? "bg-success" : "bg-muted-foreground"}`}
-          />
-        </div>
-      </div>
-    );
-  };
-
-  const EmptyTab = () => (
-    <div className="glass-card rounded-xl p-8 text-center space-y-2">
-      <UserPlus className="mx-auto h-10 w-10 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">
-        Nenhum indicado neste nível. Compartilhe seu link para crescer sua rede!
-      </p>
-    </div>
-  );
-
-  const TabContent = ({ data }: { data: Referral[] }) =>
-    data.length === 0 ? (
-      <EmptyTab />
-    ) : (
       <div className="space-y-2">
-        <p className="text-xs text-muted-foreground">{data.length} indicado{data.length !== 1 ? "s" : ""}</p>
-        {data.map((r) => (
-          <ReferralCard key={r.id} r={r} />
+        {rows.map((m) => (
+          <Card key={m.user_id} className="p-3 flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">{m.full_name}</p>
+              <p className="text-xs text-muted-foreground">
+                VIP {m.vip_level ?? 0} · {m.created_at ? format(new Date(m.created_at), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+              </p>
+            </div>
+            <span className={`text-xs ${m.is_active ? "text-success" : "text-muted-foreground"}`}>
+              {m.is_active ? "Ativo" : "Inativo"}
+            </span>
+          </Card>
         ))}
       </div>
-    );
-
-  const getLevelBadge = (level: number) => {
-    const cfg = LEVEL_CONFIG[level - 1];
-    if (!cfg) return null;
-    return (
-      <span
-        className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-        style={{ color: cfg.color, background: `${cfg.color}18` }}
-      >
-        {String.fromCharCode(64 + level)}
-      </span>
     );
   };
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-3xl mx-auto">
+    <div className="space-y-6 p-4 lg:p-6 max-w-4xl mx-auto">
       <h1 className="font-heading text-xl font-bold">Minha Equipe</h1>
 
-      {/* COMMISSION SUMMARY CARDS */}
       {loading ? (
-        <div className="grid grid-cols-2 gap-3">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {LEVEL_CONFIG.map((cfg, i) => {
-            const Icon = cfg.icon;
-            return (
-              <div
-                key={cfg.key}
-                className="rounded-xl p-4 space-y-1"
-                style={{
-                  background: `${cfg.color}08`,
-                  border: `1px solid ${cfg.color}20`,
-                }}
-              >
-                <div className="flex items-center gap-1.5">
-                  <Icon className="h-4 w-4" style={{ color: cfg.color }} />
-                  <span className="text-xs font-semibold" style={{ color: cfg.color }}>
-                    {cfg.label}
-                  </span>
-                </div>
-                <p className="font-mono text-lg font-bold" style={{ color: cfg.color }}>
-                  {fmtBRL(commSummary[i].total)}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {commSummary[i].count} comiss{commSummary[i].count !== 1 ? "ões" : "ão"} · {cfg.sublabel}
-                </p>
-              </div>
-            );
-          })}
-          {/* Total card */}
-          <div
-            className="rounded-xl p-4 space-y-1"
-            style={{
-              background: "linear-gradient(135deg, #eab30810, #f9731610)",
-              border: "1px solid #eab30830",
-            }}
-          >
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-yellow-500" />
-              <span className="text-xs font-semibold text-yellow-500">Total</span>
-            </div>
-            <p className="font-mono text-lg font-bold text-yellow-500">
-              {fmtBRL(commTotal)}
-            </p>
-            <p className="text-[10px] text-muted-foreground">
-              Todas as comissões
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* NETWORK SUMMARY */}
-      {!loading && (
-        <div className="grid grid-cols-4 gap-2">
-          <div className="glass-card rounded-xl p-3 text-center">
-            <p className="font-heading text-xl font-bold text-foreground">{totalNetwork}</p>
-            <p className="text-[9px] text-muted-foreground">Total</p>
-          </div>
-          {[
-            { count: n1.length, label: "N1", color: "#22c55e" },
-            { count: n2.length, label: "N2", color: "#3b82f6" },
-            { count: n3.length, label: "N3", color: "#8b5cf6" },
-          ].map((item) => (
-            <div key={item.label} className="glass-card rounded-xl p-3 text-center">
-              <p className="font-heading text-xl font-bold" style={{ color: item.color }}>
-                {item.count}
-              </p>
-              <p className="text-[9px] text-muted-foreground">{item.label}</p>
-            </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
-      )}
-
-      {/* COMMISSION HISTORY */}
-      {!loading && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Histórico de Comissões</h2>
-          {history.length === 0 ? (
-            <div className="glass-card rounded-xl p-6 text-center">
-              <TrendingUp className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Nenhuma comissão recebida ainda.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-2">
-                {history.map((entry) => (
-                  <div key={entry.id} className="glass-card rounded-xl p-3 flex items-center gap-3">
-                    <div
-                      className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{
-                        background: `${LEVEL_CONFIG[entry.level - 1]?.color ?? "#666"}15`,
-                      }}
-                    >
-                      <span
-                        className="text-xs font-bold"
-                        style={{ color: LEVEL_CONFIG[entry.level - 1]?.color ?? "#666" }}
-                      >
-                        {String.fromCharCode(64 + entry.level)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium truncate">
-                          {maskName(entry.source_name)}
-                        </p>
-                        {getLevelBadge(entry.level)}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        {entry.vip_plan_name} ·{" "}
-                        {entry.created_at
-                          ? format(new Date(entry.created_at), "dd/MM · HH:mm", { locale: ptBR })
-                          : "—"}
-                      </p>
-                    </div>
-                    <p
-                      className="font-mono text-sm font-bold shrink-0"
-                      style={{ color: LEVEL_CONFIG[entry.level - 1]?.color ?? "#22c55e" }}
-                    >
-                      +{fmtBRL(entry.amount)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              {hasMore && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={loadMore}
-                  disabled={historyLoading}
-                >
-                  <ChevronDown className="h-4 w-4 mr-1.5" />
-                  {historyLoading ? "Carregando..." : "Ver mais"}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* REFERRAL TABS */}
-      {loading ? (
-        <div className="space-y-2">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
-        </div>
       ) : (
-        <Tabs defaultValue="n1">
-          <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start gap-0 p-0">
-            {["n1", "n2", "n3"].map((tab, i) => (
-              <TabsTrigger
-                key={tab}
-                value={tab}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 text-sm"
-              >
-                Nível {i + 1}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="n1" className="mt-4">
-            <TabContent data={n1} />
-          </TabsContent>
-          <TabsContent value="n2" className="mt-4">
-            <TabContent data={n2} />
-          </TabsContent>
-          <TabsContent value="n3" className="mt-4">
-            <TabContent data={n3} />
-          </TabsContent>
-        </Tabs>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold">{totalTeam}</p>
+              <p className="text-xs text-muted-foreground">Total da Rede</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold text-success">{n1.length}</p>
+              <p className="text-xs text-muted-foreground">Nível 1</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold text-primary">{n2.length}</p>
+              <p className="text-xs text-muted-foreground">Nível 2</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold text-violet-500">{n3.length}</p>
+              <p className="text-xs text-muted-foreground">Nível 3</p>
+            </Card>
+          </div>
+
+          <Card className="p-4 space-y-1">
+            <p className="text-sm font-semibold">Comissões Totais</p>
+            <p className="text-2xl font-bold">{fmtBRL(commByLevel.total)}</p>
+            <p className="text-xs text-muted-foreground">
+              N1: {fmtBRL(commByLevel.n1)} · N2: {fmtBRL(commByLevel.n2)} · N3: {fmtBRL(commByLevel.n3)}
+            </p>
+          </Card>
+
+          <Tabs defaultValue="n1">
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="n1">Nível 1</TabsTrigger>
+              <TabsTrigger value="n2">Nível 2</TabsTrigger>
+              <TabsTrigger value="n3">Nível 3</TabsTrigger>
+            </TabsList>
+            <TabsContent value="n1" className="mt-3">
+              <MemberList rows={n1} />
+            </TabsContent>
+            <TabsContent value="n2" className="mt-3">
+              <MemberList rows={n2} />
+            </TabsContent>
+            <TabsContent value="n3" className="mt-3">
+              <MemberList rows={n3} />
+            </TabsContent>
+          </Tabs>
+
+          <Card className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-warning" />
+              <p className="text-sm font-semibold">Cargo atual</p>
+            </div>
+            {currentPosition ? (
+              <p className="text-sm">
+                Seu cargo atual: <b>{currentPosition.display_name}</b> · Salário mensal: <b>{fmtBRL(Number(currentPosition.monthly_salary || 0))}</b>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Continue crescendo sua equipe para desbloquear cargos e salários!</p>
+            )}
+
+            <div className="space-y-1">
+              {positions.map((p) => (
+                <div key={p.id} className="text-xs text-muted-foreground flex justify-between border-b border-border/40 py-1">
+                  <span>{p.display_name}</span>
+                  <span>Diretos: {p.required_direct_referrals} · Total: {p.required_total_team} · {fmtBRL(Number(p.monthly_salary || 0))}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Share2 className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold">Convide sua equipe</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <code className="px-2 py-1 rounded bg-secondary text-sm">{profile?.referral_code || "—"}</code>
+              <Button variant="outline" size="sm" onClick={copyCode}><Copy className="h-4 w-4 mr-1" /> Copiar código</Button>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-3 items-start">
+              <img src={qrUrl} alt="QR convite" className="h-[140px] w-[140px] rounded border border-border" />
+              <div className="space-y-2">
+                <p className="text-xs break-all text-muted-foreground">{referralLink}</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={copyLink}>Copiar link</Button>
+                  <Button size="sm" onClick={nativeShare}>Compartilhar</Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </>
       )}
     </div>
   );
