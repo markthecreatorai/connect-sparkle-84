@@ -452,7 +452,7 @@ const Dashboard = () => {
           {checkinDone ? (
             <p className="text-sm text-success">Check-in feito hoje! Volte amanhã ✓</p>
           ) : (
-            <Button onClick={doCheckin} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
+            <Button onClick={() => toast("Check-in em breve!")} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
           )}
           <p className="text-xs text-muted-foreground">Streak: {checkinStreak} dia(s) consecutivos</p>
         </div>
