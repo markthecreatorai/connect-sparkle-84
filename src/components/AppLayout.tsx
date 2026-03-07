@@ -10,6 +10,7 @@ import {
   Shield,
   Link2,
   History,
+  CheckSquare,
   Settings,
   FileText,
   LogOut,
@@ -28,6 +29,7 @@ const userNavItems = [
 ];
 
 const sidebarExtraItems = [
+  { to: "/tasks", icon: CheckSquare, label: "Tarefas" },
   { to: "/transactions", icon: History, label: "Transações" },
   { to: "/invite", icon: Link2, label: "Convite" },
 ];

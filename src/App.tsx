@@ -26,6 +26,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogs from "./pages/admin/AdminLogs";
 import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
+import Tasks from "./pages/Tasks";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/withdraw" element={<UserPage><Withdraw /></UserPage>} />
             <Route path="/transactions" element={<UserPage><Transactions /></UserPage>} />
             <Route path="/team" element={<UserPage><Team /></UserPage>} />
+            <Route path="/tasks" element={<UserPage><Tasks /></UserPage>} />
             <Route path="/profile" element={<UserPage><Profile /></UserPage>} />
             <Route path="/invite" element={<UserPage><Invite /></UserPage>} />
             <Route path="/vip" element={<UserPage><VipPlans /></UserPage>} />

@@ -11,6 +11,7 @@ import {
   Wallet,
   User,
   Users2,
+  CheckSquare,
   Shield,
   Award,
   Crown,
@@ -341,6 +342,9 @@ const Dashboard = () => {
         </Button>
         <Button onClick={() => navigate("/withdraw")} variant="outline" className="shrink-0 gap-2 border-border">
           <ArrowUpCircle className="h-4 w-4" /> Sacar
+        </Button>
+        <Button onClick={() => navigate("/tasks")} variant="outline" className="shrink-0 gap-2 border-border">
+          <CheckSquare className="h-4 w-4" /> Minhas Tarefas
         </Button>
         <Button onClick={() => navigate("/team")} variant="outline" className="shrink-0 gap-2 border-border">
           <Users className="h-4 w-4" /> Minha Equipe
