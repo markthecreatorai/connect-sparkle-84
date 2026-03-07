@@ -672,6 +672,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      distribute_deposit_commissions: {
+        Args: { p_deposit_amount: number; p_user_id: string }
+        Returns: undefined
+      }
       distribute_vip_commissions: {
         Args: { _payment_id: string; _user_id: string; _vip_plan_id: string }
         Returns: Json
