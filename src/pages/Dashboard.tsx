@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
-  Lock,
+  User,
+  Users2,
   Shield,
   Award,
   Crown,
@@ -77,6 +78,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<{ recharge: number; personal: number; income: number }>({
+    recharge: 0,
+    personal: 0,
+    income: 0,
+  });
   const [network, setNetwork] = useState<NetworkCounts>({ n1: 0, n2: 0, n3: 0 });
   const [vipReqs, setVipReqs] = useState<VipReqs>({});
   const [loading, setLoading] = useState(true);
@@ -86,13 +92,17 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [txRes, n1Res, settingsRes] = await Promise.all([
+      const [txRes, walletsRes, n1Res, settingsRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(10),
+        supabase
+          .from("wallets")
+          .select("wallet_type, balance")
+          .eq("user_id", user.id),
         supabase
           .from("profiles")
           .select("id")
@@ -105,6 +115,14 @@ const Dashboard = () => {
       ]);
 
       setTransactions(txRes.data ?? []);
+      const walletMap = { recharge: 0, personal: 0, income: 0 };
+      (walletsRes.data ?? []).forEach((w: any) => {
+        if (w.wallet_type in walletMap) {
+          // @ts-ignore
+          walletMap[w.wallet_type] = Number(w.balance ?? 0);
+        }
+      });
+      setWallets(walletMap);
       if (settingsRes.data) setVipReqs((settingsRes.data.value as any) ?? {});
 
       // Network counts
@@ -138,8 +156,9 @@ const Dashboard = () => {
   const vipLevel = profile?.vip_level ?? 0;
   const vip = VIP_META[vipLevel] ?? VIP_META[0];
   const VipIcon = vip.icon;
-  const balance = profile?.balance ?? 0;
-  const blockedBalance = profile?.blocked_balance ?? 0;
+  const rechargeBalance = wallets.recharge ?? 0;
+  const personalBalance = wallets.personal ?? 0;
+  const incomeBalance = wallets.income ?? 0;
   const totalNetwork = network.n1 + network.n2 + network.n3;
   const nextVip = vipLevel < 4 ? vipLevel + 1 : null;
   const reqForNext = nextVip !== null ? (vipReqs[String(nextVip)] ?? 0) : 0;
@@ -201,85 +220,78 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Balance */}
-        <div className="glass-card rounded-xl p-4 space-y-2">
+      {/* 3 CARTEIRAS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="glass-card rounded-xl p-4 space-y-2 border border-primary/20">
           <div className="flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-accent" />
-            <span className="text-xs text-muted-foreground">Saldo Disponível</span>
+            <Wallet className="h-4 w-4 text-primary" />
+            <span className="text-xs text-muted-foreground">Carteira de Recarga</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-[1.75rem] leading-tight font-bold text-accent-cyan">{fmtBRL(balance)}</p>
+            <p className="font-mono text-[1.75rem] leading-tight font-bold text-primary">{fmtBRL(rechargeBalance)}</p>
           )}
-          <p className="text-[10px] text-muted-foreground">Disponível para saque</p>
+          <p className="text-[10px] text-muted-foreground">Depósitos e investimentos</p>
         </div>
 
-        {/* Blocked */}
-        <div className="glass-card rounded-xl p-4 space-y-2">
+        <div className="glass-card rounded-xl p-4 space-y-2 border border-warning/20">
           <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-warning" />
-            <span className="text-xs text-muted-foreground">Saldo Bloqueado</span>
+            <User className="h-4 w-4 text-warning" />
+            <span className="text-xs text-muted-foreground">Carteira Pessoal</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-[1.75rem] leading-tight font-bold text-warning">{fmtBRL(blockedBalance)}</p>
+            <p className="font-mono text-[1.75rem] leading-tight font-bold text-warning">{fmtBRL(personalBalance)}</p>
           )}
-          <p className="text-[10px] text-muted-foreground">Em processamento</p>
+          <p className="text-[10px] text-muted-foreground">Tarefas, bônus e recompensas</p>
         </div>
 
-        {/* VIP */}
-        <div className="glass-card rounded-xl p-4 space-y-2">
+        <div className="glass-card rounded-xl p-4 space-y-2 border border-success/20">
           <div className="flex items-center gap-2">
-            <VipIcon className="h-4 w-4" style={{ color: vip.color }} />
-            <span className="text-xs text-muted-foreground">Nível VIP</span>
+            <Users2 className="h-4 w-4 text-success" />
+            <span className="text-xs text-muted-foreground">Carteira de Renda</span>
           </div>
           {loading ? (
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-28" />
           ) : (
-            <>
-              <p className="font-heading text-2xl font-bold" style={{ color: vip.color }}>
-                {vip.label}
-              </p>
-              {nextVip !== null ? (
-                <div className="space-y-1">
-                  <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full rounded-full gradient-primary transition-all duration-500"
-                      style={{ width: `${Math.min((network.n1 / reqForNext) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    {network.n1}/{reqForNext} indicados para VIP {nextVip}
-                  </p>
+            <p className="font-mono text-[1.75rem] leading-tight font-bold text-success">{fmtBRL(incomeBalance)}</p>
+          )}
+          <p className="text-[10px] text-muted-foreground">Comissões da equipe</p>
+        </div>
+      </div>
+
+      {/* CARD VIP */}
+      <div className="glass-card rounded-xl p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <VipIcon className="h-4 w-4" style={{ color: vip.color }} />
+          <span className="text-xs text-muted-foreground">Nível VIP</span>
+        </div>
+        {loading ? (
+          <Skeleton className="h-8 w-20" />
+        ) : (
+          <>
+            <p className="font-heading text-2xl font-bold" style={{ color: vip.color }}>
+              {vip.label}
+            </p>
+            {nextVip !== null ? (
+              <div className="space-y-1">
+                <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className="h-full rounded-full gradient-primary transition-all duration-500"
+                    style={{ width: `${Math.min((network.n1 / (reqForNext || 1)) * 100, 100)}%` }}
+                  />
                 </div>
-              ) : (
-                <p className="text-[10px] text-muted-foreground">Nível máximo! 👑</p>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Network */}
-        <div className="glass-card rounded-xl p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <span className="text-xs text-muted-foreground">Minha Rede</span>
-          </div>
-          {loading ? (
-            <Skeleton className="h-8 w-16" />
-          ) : (
-            <>
-              <p className="font-heading text-2xl font-bold text-foreground">{totalNetwork}</p>
-              <p className="text-[10px] text-muted-foreground">
-                N1: {network.n1} · N2: {network.n2} · N3: {network.n3}
-              </p>
-            </>
-          )}
-        </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {network.n1}/{reqForNext} indicados para VIP {nextVip} · Rede total: {totalNetwork}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">Nível máximo! 👑</p>
+            )}
+          </>
+        )}
       </div>
 
       {/* ACTION BUTTONS */}
