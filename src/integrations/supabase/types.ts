@@ -523,6 +523,54 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_levels: {
+        Row: {
+          created_at: string | null
+          daily_income: number
+          daily_tasks: number
+          deposit_required: number
+          display_name: string
+          id: string
+          is_available: boolean
+          level_code: string
+          min_direct_referrals: number
+          monthly_income: number
+          reward_per_task: number
+          sort_order: number
+          yearly_income: number
+        }
+        Insert: {
+          created_at?: string | null
+          daily_income?: number
+          daily_tasks?: number
+          deposit_required?: number
+          display_name: string
+          id?: string
+          is_available?: boolean
+          level_code: string
+          min_direct_referrals?: number
+          monthly_income?: number
+          reward_per_task?: number
+          sort_order?: number
+          yearly_income?: number
+        }
+        Update: {
+          created_at?: string | null
+          daily_income?: number
+          daily_tasks?: number
+          deposit_required?: number
+          display_name?: string
+          id?: string
+          is_available?: boolean
+          level_code?: string
+          min_direct_referrals?: number
+          monthly_income?: number
+          reward_per_task?: number
+          sort_order?: number
+          yearly_income?: number
+        }
+        Relationships: []
+      }
       vip_plans: {
         Row: {
           color_hex: string
