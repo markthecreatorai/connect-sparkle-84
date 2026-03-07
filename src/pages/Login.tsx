@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LogIn, Eye, EyeOff, Loader2, Phone as PhoneIcon } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { LogIn, Eye, EyeOff, Loader2, Phone } from "lucide-react";
 
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -17,33 +16,26 @@ const formatPhone = (value: string) => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
-  const [loginInput, setLoginInput] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Detect if input looks like a phone number (starts with digit or parenthesis)
-  const isPhoneInput = /^[\d(]/.test(loginInput.trim());
-
-  const resolveEmail = (input: string): string => {
-    const trimmed = input.trim();
-    // If it contains @ it's a legacy email login
-    if (trimmed.includes("@")) return trimmed;
-    // Otherwise treat as phone, extract digits and build internal email
-    const digits = trimmed.replace(/\D/g, "");
-    if (digits.length >= 10) return `${digits}@plataforma.app`;
-    return trimmed;
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const email = resolveEmail(loginInput);
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length !== 11) {
+      toast.error("Telefone inválido");
+      setLoading(false);
+      return;
+    }
+
+    const pseudoEmail = `${phoneDigits}@plataforma.app`;
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: pseudoEmail,
       password,
     });
 
@@ -53,7 +45,6 @@ const Login = () => {
       return;
     }
 
-    // Check if user is active
     const { data: profile } = await supabase
       .from("profiles")
       .select("is_active")
@@ -67,7 +58,6 @@ const Login = () => {
       return;
     }
 
-    // Check admin role for redirect
     const { data: adminRole } = await supabase
       .from("user_roles")
       .select("role")
@@ -77,16 +67,6 @@ const Login = () => {
 
     setLoading(false);
     navigate(adminRole ? "/admin" : "/dashboard");
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // If it looks like phone input, apply mask
-    if (/^[\d(]/.test(val) && !val.includes("@")) {
-      setLoginInput(formatPhone(val));
-    } else {
-      setLoginInput(val);
-    }
   };
 
   return (
@@ -102,22 +82,21 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="loginInput">Telefone ou Email</Label>
+            <Label htmlFor="phone">Telefone</Label>
             <div className="relative">
-              {isPhoneInput && (
-                <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              )}
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="loginInput"
+                id="phone"
                 type="text"
-                value={loginInput}
-                onChange={handleInputChange}
-                placeholder="(11) 99999-9999 ou email"
+                value={phone}
+                onChange={(e) => setPhone(formatPhone(e.target.value))}
+                placeholder="(11) 99999-9999"
                 required
-                className={`bg-secondary border-border ${isPhoneInput ? "pl-9" : ""}`}
+                className="bg-secondary border-border pl-9"
               />
             </div>
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="password">Senha</Label>
             <div className="relative">
@@ -141,9 +120,9 @@ const Login = () => {
           </div>
 
           <div className="text-right">
-            <Link to="/reset-password" className="text-xs text-primary hover:underline">
+            <span className="text-xs text-muted-foreground/70 cursor-not-allowed" title="Recuperação em breve">
               Esqueceu a senha?
-            </Link>
+            </span>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full gradient-primary btn-glow text-primary-foreground">

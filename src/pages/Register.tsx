@@ -44,7 +44,6 @@ const Register = () => {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const mark = (field: string) => () => setTouched((p) => ({ ...p, [field]: true }));
-
   const phoneDigits = phone.replace(/\D/g, "");
 
   const errors = useMemo(() => {
@@ -58,6 +57,7 @@ const Register = () => {
   }, [fullName, phoneDigits, password, confirmPassword, referralCode, touched]);
 
   const strength = getPasswordStrength(password);
+  const pseudoEmail = phoneDigits ? `${phoneDigits}@plataforma.app` : "";
 
   const isValid =
     fullName.trim().length >= 3 &&
@@ -72,11 +72,12 @@ const Register = () => {
     if (!isValid) return;
     setLoading(true);
 
-    // Validate referral code against referral_tree
+    const normalizedReferral = referralCode.toUpperCase().trim();
+
     const { data: referralEntry } = await supabase
-      .from("referral_tree")
+      .from("referral_tree" as never)
       .select("user_id")
-      .eq("referral_code", referralCode.toUpperCase().trim())
+      .eq("referral_code", normalizedReferral)
       .maybeSingle();
 
     if (!referralEntry) {
@@ -85,19 +86,18 @@ const Register = () => {
       return;
     }
 
-    const referredBy = referralEntry.user_id;
-    const internalEmail = `${phoneDigits}@plataforma.app`;
+    const referredBy = (referralEntry as { user_id: string }).user_id;
 
     const { error } = await supabase.auth.signUp({
-      email: internalEmail,
+      email: pseudoEmail,
       password,
       options: {
         data: {
           full_name: fullName.trim(),
           phone: phoneDigits,
           referred_by: referredBy,
+          referral_code_input: normalizedReferral,
         },
-        emailRedirectTo: window.location.origin,
       },
     });
 
@@ -129,7 +129,6 @@ const Register = () => {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
-          {/* Full Name */}
           <div className="space-y-1.5">
             <Label htmlFor="fullName">Nome completo</Label>
             <Input
@@ -143,7 +142,6 @@ const Register = () => {
             {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
           </div>
 
-          {/* Phone */}
           <div className="space-y-1.5">
             <Label htmlFor="phone">Telefone</Label>
             <div className="relative">
@@ -160,7 +158,6 @@ const Register = () => {
             {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
           </div>
 
-          {/* Password */}
           <div className="space-y-1.5">
             <Label htmlFor="password">Senha</Label>
             <div className="relative">
@@ -188,7 +185,6 @@ const Register = () => {
             )}
           </div>
 
-          {/* Confirm Password */}
           <div className="space-y-1.5">
             <Label htmlFor="confirmPassword">Confirmar senha</Label>
             <div className="relative">
@@ -208,7 +204,6 @@ const Register = () => {
             {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
           </div>
 
-          {/* Referral Code - Mandatory */}
           <div className="space-y-1.5">
             <Label htmlFor="referral">Código de indicação</Label>
             <Input
@@ -217,8 +212,9 @@ const Register = () => {
               onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
               onBlur={mark("referralCode")}
               placeholder="Ex: A7K2M9"
-              maxLength={6}
-              className={`uppercase tracking-widest font-mono ${fieldClass("referralCode")}`}
+              maxLength={10}
+              required
+              className={`bg-secondary border-border uppercase tracking-widest font-mono ${errors.referralCode ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
             {errors.referralCode && <p className="text-xs text-destructive">{errors.referralCode}</p>}
           </div>
