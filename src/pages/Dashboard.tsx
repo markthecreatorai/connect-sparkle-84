@@ -70,6 +70,17 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 
 interface NetworkCounts { n1: number; n2: number; n3: number }
 interface VipReqs { [k: string]: number }
+interface VipLevelRow {
+  level_code: string;
+  display_name: string;
+  deposit_required: number;
+  daily_tasks: number;
+  reward_per_task: number;
+  daily_income: number;
+  monthly_income: number;
+  sort_order: number;
+  is_available: boolean;
+}
 
 // ─── component ──────────────────────────────────────────────────
 
@@ -85,14 +96,17 @@ const Dashboard = () => {
   });
   const [network, setNetwork] = useState<NetworkCounts>({ n1: 0, n2: 0, n3: 0 });
   const [vipReqs, setVipReqs] = useState<VipReqs>({});
+  const [vipLevels, setVipLevels] = useState<VipLevelRow[]>([]);
+  const [todayTasks, setTodayTasks] = useState<{ tasks_completed: number; tasks_required: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
+  const [showVipLevels, setShowVipLevels] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [txRes, walletsRes, n1Res, settingsRes] = await Promise.all([
+      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("*")
@@ -112,6 +126,16 @@ const Dashboard = () => {
           .select("key, value")
           .eq("key", "vip_requirements")
           .maybeSingle(),
+        supabase
+          .from("vip_levels" as never)
+          .select("level_code, display_name, deposit_required, daily_tasks, reward_per_task, daily_income, monthly_income, sort_order, is_available")
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("daily_tasks")
+          .select("tasks_completed, tasks_required")
+          .eq("user_id", user.id)
+          .eq("task_date", new Date().toISOString().slice(0, 10))
+          .maybeSingle(),
       ]);
 
       setTransactions(txRes.data ?? []);
@@ -124,6 +148,8 @@ const Dashboard = () => {
       });
       setWallets(walletMap);
       if (settingsRes.data) setVipReqs((settingsRes.data.value as any) ?? {});
+      setVipLevels(((vipLevelsRes.data as unknown as VipLevelRow[]) ?? []));
+      setTodayTasks((taskTodayRes.data as { tasks_completed: number; tasks_required: number } | null) ?? null);
 
       // Network counts
       const n1Ids = (n1Res.data ?? []).map((p) => p.id);
@@ -160,8 +186,11 @@ const Dashboard = () => {
   const personalBalance = wallets.personal ?? 0;
   const incomeBalance = wallets.income ?? 0;
   const totalNetwork = network.n1 + network.n2 + network.n3;
-  const nextVip = vipLevel < 4 ? vipLevel + 1 : null;
+  const nextVip = vipLevel < 9 ? vipLevel + 1 : null;
   const reqForNext = nextVip !== null ? (vipReqs[String(nextVip)] ?? 0) : 0;
+  const codeForLevel = (lvl: number) => (lvl <= 0 ? "intern" : `vip${lvl}`);
+  const currentVipConfig = vipLevels.find((v) => v.level_code === codeForLevel(vipLevel));
+  const nextVipConfig = nextVip !== null ? vipLevels.find((v) => v.level_code === codeForLevel(nextVip)) : null;
   const initials = (profile?.full_name ?? "")
     .split(" ")
     .slice(0, 2)
@@ -263,19 +292,30 @@ const Dashboard = () => {
       </div>
 
       {/* CARD VIP */}
-      <div className="glass-card rounded-xl p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <VipIcon className="h-4 w-4" style={{ color: vip.color }} />
-          <span className="text-xs text-muted-foreground">Nível VIP</span>
+      <div className="glass-card rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <VipIcon className="h-4 w-4" style={{ color: vip.color }} />
+            <span className="text-xs text-muted-foreground">Nível VIP</span>
+          </div>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowVipLevels(true)}>
+            Ver todos os níveis
+          </Button>
         </div>
         {loading ? (
           <Skeleton className="h-8 w-20" />
         ) : (
           <>
             <p className="font-heading text-2xl font-bold" style={{ color: vip.color }}>
-              {vip.label}
+              {currentVipConfig?.display_name ?? vip.label}
             </p>
-            {nextVip !== null ? (
+            <p className="text-[11px] text-muted-foreground">
+              Tarefas hoje: {todayTasks?.tasks_completed ?? 0}/{todayTasks?.tasks_required ?? currentVipConfig?.daily_tasks ?? 0}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Renda diária: {fmtBRL(Number(currentVipConfig?.daily_income ?? 0))}
+            </p>
+            {nextVipConfig ? (
               <div className="space-y-1">
                 <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
                   <div
@@ -284,7 +324,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  {network.n1}/{reqForNext} indicados para VIP {nextVip} · Rede total: {totalNetwork}
+                  {network.n1}/{reqForNext} indicados para {nextVipConfig.display_name} · Rede total: {totalNetwork}
                 </p>
               </div>
             ) : (
@@ -331,6 +371,51 @@ const Dashboard = () => {
               <Button onClick={shareLink} className="flex-1 gradient-primary btn-glow text-primary-foreground gap-2">
                 <Share2 className="h-4 w-4" /> Compartilhar
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showVipLevels && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setShowVipLevels(false)} />
+          <div className="glass-card relative z-10 w-full max-w-4xl rounded-2xl p-4 md:p-6 space-y-4 max-h-[85vh] overflow-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading text-lg font-bold">Todos os níveis VIP</h2>
+              <button onClick={() => setShowVipLevels(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    <th className="py-2 pr-3">Nível</th>
+                    <th className="py-2 pr-3">Depósito</th>
+                    <th className="py-2 pr-3">Tarefas/dia</th>
+                    <th className="py-2 pr-3">Renda/Tarefa</th>
+                    <th className="py-2 pr-3">Renda Diária</th>
+                    <th className="py-2 pr-3">Renda Mensal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vipLevels.map((v) => {
+                    const isCurrent = v.level_code === codeForLevel(vipLevel);
+                    return (
+                      <tr key={v.level_code} className={`border-b border-border/50 ${isCurrent ? "bg-primary/10" : ""}`}>
+                        <td className="py-2 pr-3 font-medium">
+                          {v.display_name} {!v.is_available ? "🔒 Em breve" : ""}
+                        </td>
+                        <td className="py-2 pr-3">{fmtBRL(Number(v.deposit_required || 0))}</td>
+                        <td className="py-2 pr-3">{v.daily_tasks}</td>
+                        <td className="py-2 pr-3">{fmtBRL(Number(v.reward_per_task || 0))}</td>
+                        <td className="py-2 pr-3">{fmtBRL(Number(v.daily_income || 0))}</td>
+                        <td className="py-2 pr-3">{fmtBRL(Number(v.monthly_income || 0))}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
