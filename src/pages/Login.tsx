@@ -120,9 +120,9 @@ const Login = () => {
           </div>
 
           <div className="text-right">
-            <span className="text-xs text-muted-foreground/70 cursor-not-allowed" title="Recuperação em breve">
+            <Link to="/reset-password" className="text-xs text-primary hover:underline">
               Esqueceu a senha?
-            </span>
+            </Link>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full gradient-primary btn-glow text-primary-foreground">

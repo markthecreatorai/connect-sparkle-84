@@ -12,15 +12,25 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const isRecovery = location.hash.includes("type=recovery");
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const clean = identifier.trim();
+    const digits = clean.replace(/\D/g, "");
+    const email = clean.includes("@") ? clean : digits.length === 11 ? `${digits}@plataforma.app` : "";
+
+    if (!email) {
+      toast.error("Informe um email válido ou telefone com 11 dígitos");
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
@@ -59,14 +69,14 @@ const ResetPassword = () => {
             {isRecovery ? "Nova Senha" : sent ? "Email Enviado" : "Recuperar Senha"}
           </h1>
           {!isRecovery && !sent && (
-            <p className="mt-2 text-sm text-muted-foreground">Informe seu email para receber o link</p>
+            <p className="mt-2 text-sm text-muted-foreground">Informe seu email ou telefone para receber o link</p>
           )}
         </div>
 
         {sent && !isRecovery ? (
           <div className="text-center space-y-4">
             <p className="text-sm text-muted-foreground">
-              Verifique seu email <span className="text-foreground font-medium">{email}</span> para redefinir sua senha.
+              Verifique seu email para redefinir sua senha.
             </p>
             <p className="text-xs text-muted-foreground">Não recebeu? Verifique sua caixa de spam.</p>
           </div>
@@ -92,13 +102,13 @@ const ResetPassword = () => {
         ) : (
           <form onSubmit={handleRequestReset} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Email ou Telefone</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="seu@email.com ou (11) 99999-9999"
                 required
                 className="bg-secondary border-border"
               />
