@@ -34,7 +34,6 @@ const Register = () => {
   const refCode = searchParams.get("ref") || "";
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -46,24 +45,26 @@ const Register = () => {
 
   const mark = (field: string) => () => setTouched((p) => ({ ...p, [field]: true }));
 
+  const phoneDigits = phone.replace(/\D/g, "");
+
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (touched.fullName && fullName.trim().length < 3) e.fullName = "Nome deve ter no mínimo 3 caracteres";
-    if (touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Email inválido";
-    if (touched.phone && phone.replace(/\D/g, "").length < 11) e.phone = "Telefone incompleto";
+    if (touched.phone && phoneDigits.length < 11) e.phone = "Telefone incompleto";
     if (touched.password && password.length < 6) e.password = "Mínimo 6 caracteres";
     if (touched.confirmPassword && confirmPassword !== password) e.confirmPassword = "Senhas não coincidem";
+    if (touched.referralCode && referralCode.trim().length === 0) e.referralCode = "Código de indicação obrigatório";
     return e;
-  }, [fullName, email, phone, password, confirmPassword, touched]);
+  }, [fullName, phoneDigits, password, confirmPassword, referralCode, touched]);
 
   const strength = getPasswordStrength(password);
 
   const isValid =
     fullName.trim().length >= 3 &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
-    phone.replace(/\D/g, "").length === 11 &&
+    phoneDigits.length === 11 &&
     password.length >= 6 &&
     confirmPassword === password &&
+    referralCode.trim().length > 0 &&
     Object.keys(errors).length === 0;
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -71,28 +72,29 @@ const Register = () => {
     if (!isValid) return;
     setLoading(true);
 
-    let referredBy: string | null = null;
-    if (referralCode.trim()) {
-      const { data: referrer } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("referral_code", referralCode.toUpperCase().trim())
-        .maybeSingle();
-      if (!referrer) {
-        toast.error("Código de indicação não encontrado");
-        setLoading(false);
-        return;
-      }
-      referredBy = referrer.id;
+    // Validate referral code against referral_tree
+    const { data: referralEntry } = await supabase
+      .from("referral_tree")
+      .select("user_id")
+      .eq("referral_code", referralCode.toUpperCase().trim())
+      .maybeSingle();
+
+    if (!referralEntry) {
+      toast.error("Código de indicação inválido");
+      setLoading(false);
+      return;
     }
 
+    const referredBy = referralEntry.user_id;
+    const internalEmail = `${phoneDigits}@plataforma.app`;
+
     const { error } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: internalEmail,
       password,
       options: {
         data: {
           full_name: fullName.trim(),
-          phone: phone.replace(/\D/g, ""),
+          phone: phoneDigits,
           referred_by: referredBy,
         },
         emailRedirectTo: window.location.origin,
@@ -101,9 +103,13 @@ const Register = () => {
 
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      if (error.message.includes("already registered")) {
+        toast.error("Este telefone já está cadastrado");
+      } else {
+        toast.error(error.message);
+      }
     } else {
-      toast.success("Cadastro realizado! Verifique seu email para confirmar.");
+      toast.success("Cadastro realizado com sucesso!");
       navigate("/login");
     }
   };
@@ -135,21 +141,6 @@ const Register = () => {
               className={fieldClass("fullName")}
             />
             {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
-          </div>
-
-          {/* Email */}
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={mark("email")}
-              placeholder="seu@email.com"
-              className={fieldClass("email")}
-            />
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
           </div>
 
           {/* Phone */}
@@ -217,17 +208,19 @@ const Register = () => {
             {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
           </div>
 
-          {/* Referral Code */}
+          {/* Referral Code - Mandatory */}
           <div className="space-y-1.5">
-            <Label htmlFor="referral">Código de indicação (opcional)</Label>
+            <Label htmlFor="referral">Código de indicação</Label>
             <Input
               id="referral"
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+              onBlur={mark("referralCode")}
               placeholder="Ex: A7K2M9"
               maxLength={6}
-              className="bg-secondary border-border uppercase tracking-widest font-mono"
+              className={`uppercase tracking-widest font-mono ${fieldClass("referralCode")}`}
             />
+            {errors.referralCode && <p className="text-xs text-destructive">{errors.referralCode}</p>}
           </div>
 
           <Button type="submit" disabled={loading || !isValid} className="w-full gradient-primary btn-glow text-primary-foreground mt-2">
