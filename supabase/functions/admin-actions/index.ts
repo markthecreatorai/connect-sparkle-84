@@ -93,7 +93,7 @@ async function logActivity(
 
 // ─── recalculate VIP ────────────────────────────────────────────
 
-async function recalculateVip(db: ReturnType<typeof createClient>, userId: string) {
+async function recalculateVip(db: DB, userId: string) {
   // Count valid referrals: referred_by = userId AND has approved deposit
   const { data: referrals } = await db
     .from("profiles")
