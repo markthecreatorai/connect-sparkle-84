@@ -83,7 +83,7 @@ async function getSetting(db: DB, key: string) {
 }
 
 async function logActivity(
-  db: ReturnType<typeof createClient>,
+  db: DB,
   userId: string,
   action: string,
   details: Record<string, unknown>,
