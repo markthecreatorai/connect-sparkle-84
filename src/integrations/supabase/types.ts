@@ -270,6 +270,7 @@ export type Database = {
           amount: number
           approved_at: string | null
           approved_by: string | null
+          balance_after: number | null
           created_at: string | null
           description: string | null
           id: string
@@ -278,11 +279,13 @@ export type Database = {
           status: string
           type: string
           user_id: string
+          wallet_type: string | null
         }
         Insert: {
           amount: number
           approved_at?: string | null
           approved_by?: string | null
+          balance_after?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -291,11 +294,13 @@ export type Database = {
           status?: string
           type: string
           user_id: string
+          wallet_type?: string | null
         }
         Update: {
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          balance_after?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -304,6 +309,7 @@ export type Database = {
           status?: string
           type?: string
           user_id?: string
+          wallet_type?: string | null
         }
         Relationships: [
           {
