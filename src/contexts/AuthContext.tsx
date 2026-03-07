@@ -14,7 +14,7 @@ interface Profile {
   is_active: boolean | null;
   pix_key: string | null;
   pix_key_type: string | null;
-  payment_password_hash: string | null;
+  
   referred_by: string | null;
   created_at: string | null;
 }
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, referral_code, vip_level, balance, blocked_balance, is_active, pix_key, pix_key_type, payment_password_hash, referred_by, created_at")
+      .select("id, full_name, email, phone, referral_code, vip_level, balance, blocked_balance, is_active, pix_key, pix_key_type, referred_by, created_at")
       .eq("id", userId)
       .maybeSingle();
     setProfile(data);

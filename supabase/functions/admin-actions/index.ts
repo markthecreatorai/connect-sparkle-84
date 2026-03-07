@@ -102,7 +102,7 @@ async function recalculateVip(db: DB, userId: string) {
 
   if (!referrals || referrals.length === 0) return;
 
-  const referralIds = referrals.map((r) => r.id);
+  const referralIds = referrals.map((r: { id: string }) => r.id);
 
   // Check which have approved deposits
   const { data: depositsData } = await db
@@ -111,7 +111,7 @@ async function recalculateVip(db: DB, userId: string) {
     .in("user_id", referralIds)
     .eq("status", "approved");
 
-  const validCount = new Set((depositsData ?? []).map((d) => d.user_id)).size;
+  const validCount = new Set((depositsData ?? []).map((d: { user_id: string }) => d.user_id)).size;
 
   // Get VIP requirements
   const vipReqs = (await getSetting(db, "vip_requirements")) as Record<string, number> | null;

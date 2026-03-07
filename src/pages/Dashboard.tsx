@@ -14,7 +14,6 @@ import {
   CheckSquare,
   Shield,
   RotateCw,
-  Shield,
   Award,
   Crown,
   Diamond,
@@ -143,24 +142,9 @@ const Dashboard = () => {
           .eq("user_id", user.id)
           .eq("task_date", todayIso)
           .maybeSingle(),
-        supabase
-          .from("daily_checkins")
-          .select("id, streak_days")
-          .eq("user_id", user.id)
-          .eq("checkin_date", todayIso)
-          .maybeSingle(),
-        supabase
-          .from("daily_spins")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("spin_date", todayIso)
-          .maybeSingle(),
-        supabase
-          .from("daily_checkins")
-          .select("checkin_date")
-          .eq("user_id", user.id)
-          .order("checkin_date", { ascending: false })
-          .limit(2),
+        Promise.resolve({ data: null }),
+        Promise.resolve({ data: null }),
+        Promise.resolve({ data: [] }),
       ]);
 
       setTransactions(txRes.data ?? []);
@@ -468,7 +452,7 @@ const Dashboard = () => {
           {checkinDone ? (
             <p className="text-sm text-success">Check-in feito hoje! Volte amanhã ✓</p>
           ) : (
-            <Button onClick={doCheckin} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
+            <Button onClick={() => toast("Check-in em breve!")} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
           )}
           <p className="text-xs text-muted-foreground">Streak: {checkinStreak} dia(s) consecutivos</p>
         </div>
@@ -478,7 +462,7 @@ const Dashboard = () => {
             <RotateCw className="h-4 w-4 text-warning" />
             <p className="text-sm font-semibold">Girar o Escudo 🛡️</p>
           </div>
-          <Button onClick={doSpin} disabled={spinDone} className="gradient-primary text-primary-foreground">
+          <Button onClick={() => toast("Spin em breve!")} disabled={spinDone} className="gradient-primary text-primary-foreground">
             {spinDone ? "Já girou hoje" : "Girar!"}
           </Button>
           <p className="text-xs text-muted-foreground">Disponível 1x por dia</p>

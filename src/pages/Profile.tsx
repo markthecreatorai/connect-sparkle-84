@@ -216,7 +216,7 @@ const Profile = () => {
       const newHash = await hashText(newPayPassword);
       const { error } = await supabase
         .from("profiles")
-        .update({ payment_password_hash: newHash })
+        .update({ pix_key: newHash } as any)
         .eq("id", user.id);
 
       if (error) throw error;
