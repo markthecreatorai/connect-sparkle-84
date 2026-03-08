@@ -118,6 +118,27 @@ const Withdraw = () => {
 
     setSubmitting(true);
 
+    // Verify payment password server-side
+    try {
+      const { data: pwData, error: pwErr } = await supabase.functions.invoke("payment-password", {
+        body: { action: "verify", password: paymentPassword },
+      });
+      if (pwErr || !pwData?.ok) {
+        toast.error("Erro ao verificar senha de pagamento");
+        setSubmitting(false);
+        return;
+      }
+      if (!pwData.valid) {
+        toast.error("Senha de pagamento incorreta");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      toast.error("Erro ao verificar senha de pagamento");
+      setSubmitting(false);
+      return;
+    }
+
     const { data, error } = await supabase.rpc("request_withdrawal" as any, {
       _user_id: user.id,
       _amount: amount,

@@ -103,6 +103,9 @@ const Dashboard = () => {
   const [checkinDone, setCheckinDone] = useState(false);
   const [checkinStreak, setCheckinStreak] = useState(0);
   const [spinDone, setSpinDone] = useState(false);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  const [spinLoading, setSpinLoading] = useState(false);
+  const [spinResult, setSpinResult] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [showVipLevels, setShowVipLevels] = useState(false);
@@ -112,7 +115,7 @@ const Dashboard = () => {
     if (!user) return;
     const load = async () => {
       const todayIso = new Date().toISOString().slice(0, 10);
-      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes, checkinRes, spinRes, prevCheckinsRes] = await Promise.all([
+      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes, gamificationRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("*")
@@ -142,9 +145,7 @@ const Dashboard = () => {
           .eq("user_id", user.id)
           .eq("task_date", todayIso)
           .maybeSingle(),
-        Promise.resolve({ data: null }),
-        Promise.resolve({ data: null }),
-        Promise.resolve({ data: [] }),
+        supabase.functions.invoke("gamification", { body: { action: "status" } }),
       ]);
 
       setTransactions(txRes.data ?? []);
@@ -159,14 +160,13 @@ const Dashboard = () => {
       if (settingsRes.data) setVipReqs((settingsRes.data.value as any) ?? {});
       setVipLevels(((vipLevelsRes.data as unknown as VipLevelRow[]) ?? []));
       setTodayTasks((taskTodayRes.data as { tasks_completed: number; tasks_required: number } | null) ?? null);
-      setCheckinDone(!!checkinRes.data);
-      setSpinDone(!!spinRes.data);
-      if (checkinRes.data) {
-        setCheckinStreak(Number((checkinRes.data as any).streak_days || 1));
-      } else {
-        const prev = (prevCheckinsRes.data as any[]) ?? [];
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        setCheckinStreak(prev.some((r) => r.checkin_date === yesterday) ? 0 : 0);
+
+      // Gamification status
+      const gData = gamificationRes.data;
+      if (gData?.ok) {
+        setCheckinDone(!!gData.checkin_done);
+        setSpinDone(!!gData.spin_done);
+        setCheckinStreak(gData.streak ?? 0);
       }
 
       // Network counts
@@ -229,6 +229,57 @@ const Dashboard = () => {
     } else {
       copyLink();
     }
+  };
+
+  const handleCheckin = async () => {
+    setCheckinLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gamification", {
+        body: { action: "checkin" },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Erro");
+      setCheckinDone(true);
+      setCheckinStreak(data.streak ?? checkinStreak + 1);
+      toast.success(`Check-in feito! +R$0,50 · Streak: ${data.streak} dia(s) 🔥`);
+      // Refresh wallets
+      const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user!.id);
+      const wMap = { recharge: 0, personal: 0, income: 0 };
+      (wRes ?? []).forEach((w: any) => { if (w.wallet_type in wMap) (wMap as any)[w.wallet_type] = Number(w.balance ?? 0); });
+      setWallets(wMap);
+    } catch (e: any) {
+      toast.error(e.message || "Erro no check-in");
+    }
+    setCheckinLoading(false);
+  };
+
+  const handleSpin = async () => {
+    setSpinLoading(true);
+    setSpinResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("gamification", {
+        body: { action: "spin" },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Erro");
+      // Simulate spin delay
+      await new Promise((r) => setTimeout(r, 2000));
+      setSpinResult(data.prize);
+      setSpinDone(true);
+      if (data.prize > 0) {
+        toast.success(`🎉 Parabéns! Você ganhou R$${Number(data.prize).toFixed(2)}!`);
+        // Refresh wallets
+        const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user!.id);
+        const wMap = { recharge: 0, personal: 0, income: 0 };
+        (wRes ?? []).forEach((w: any) => { if (w.wallet_type in wMap) (wMap as any)[w.wallet_type] = Number(w.balance ?? 0); });
+        setWallets(wMap);
+      } else {
+        toast("Tente novamente amanhã! 🛡️");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erro na roleta");
+    }
+    setSpinLoading(false);
   };
 
   // ─── render ─────────────────────────────────────────────────
@@ -452,20 +503,28 @@ const Dashboard = () => {
           {checkinDone ? (
             <p className="text-sm text-success">Check-in feito hoje! Volte amanhã ✓</p>
           ) : (
-            <Button onClick={() => toast("Check-in em breve!")} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
+            <Button onClick={handleCheckin} disabled={checkinLoading} className="gradient-primary text-primary-foreground">
+              {checkinLoading ? <><RotateCw className="h-4 w-4 mr-2 animate-spin" /> Fazendo...</> : "Fazer Check-in ✓"}
+            </Button>
           )}
-          <p className="text-xs text-muted-foreground">Streak: {checkinStreak} dia(s) consecutivos</p>
+          <p className="text-xs text-muted-foreground">🔥 Streak: {checkinStreak} dia(s) consecutivos · +R$0,50/dia</p>
         </div>
 
         <div className="glass-card rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <RotateCw className="h-4 w-4 text-warning" />
+            <RotateCw className={`h-4 w-4 text-warning ${spinLoading ? "animate-spin" : ""}`} />
             <p className="text-sm font-semibold">Girar o Escudo 🛡️</p>
           </div>
-          <Button onClick={() => toast("Spin em breve!")} disabled={spinDone} className="gradient-primary text-primary-foreground">
-            {spinDone ? "Já girou hoje" : "Girar!"}
-          </Button>
-          <p className="text-xs text-muted-foreground">Disponível 1x por dia</p>
+          {spinResult !== null ? (
+            <p className={`text-lg font-bold ${spinResult > 0 ? "text-success" : "text-muted-foreground"}`}>
+              {spinResult > 0 ? `🎉 +R$${spinResult.toFixed(2)}!` : "Tente amanhã!"}
+            </p>
+          ) : (
+            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="gradient-primary text-primary-foreground">
+              {spinLoading ? "Girando..." : spinDone ? "Já girou hoje" : "Girar!"}
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground">Prêmios: R$1 a R$100 · Disponível 1x/dia</p>
         </div>
       </div>
 

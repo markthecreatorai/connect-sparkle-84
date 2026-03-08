@@ -199,27 +199,25 @@ const Profile = () => {
     setSavingPayPw(true);
 
     try {
+      const payload: Record<string, string> = {
+        action: "set",
+        password: newPayPassword,
+      };
       if (hasPaymentPassword) {
         if (!/^\d{6}$/.test(currentPayPassword)) {
           toast.error("Informe a senha de pagamento atual");
           setSavingPayPw(false);
           return;
         }
-        const currentHash = await hashText(currentPayPassword);
-        if (currentHash !== (profile as any)?.payment_password_hash) {
-          toast.error("Senha de pagamento atual inválida");
-          setSavingPayPw(false);
-          return;
-        }
+        payload.current_password = currentPayPassword;
       }
 
-      const newHash = await hashText(newPayPassword);
-      const { error } = await supabase
-        .from("profiles")
-        .update({ pix_key: newHash } as any)
-        .eq("id", user.id);
+      const { data, error } = await supabase.functions.invoke("payment-password", {
+        body: payload,
+      });
 
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Erro desconhecido");
 
       toast.success(hasPaymentPassword ? "Senha de pagamento alterada" : "Senha de pagamento criada");
       setCurrentPayPassword("");

@@ -29,6 +29,8 @@ import AdminReports from "./pages/admin/AdminReports";
 import AdminLogs from "./pages/admin/AdminLogs";
 import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
+import Investments from "./pages/Investments";
+import Guide from "./pages/Guide";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,8 @@ const App = () => (
             <Route path="/profile" element={<UserPage><Profile /></UserPage>} />
             <Route path="/invite" element={<UserPage><Invite /></UserPage>} />
             <Route path="/vip" element={<UserPage><VipPlans /></UserPage>} />
+            <Route path="/investments" element={<UserPage><Investments /></UserPage>} />
+            <Route path="/guide" element={<UserPage><Guide /></UserPage>} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
