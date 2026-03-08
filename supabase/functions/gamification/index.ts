@@ -19,14 +19,14 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify JWT using Supabase Auth (cryptographic verification)
+    // Verify JWT using Supabase Auth
     const token = authHeader.replace("Bearer ", "");
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) throw new Error("Unauthorized");
-    const userId = claimsData.claims.sub as string;
+    const { data: { user: authUser }, error: authError } = await userClient.auth.getUser(token);
+    if (authError || !authUser) throw new Error("Unauthorized");
+    const userId = authUser.id;
 
     const db = createClient(supabaseUrl, serviceKey);
     const { action } = await req.json();
