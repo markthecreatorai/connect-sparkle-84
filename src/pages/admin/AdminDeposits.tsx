@@ -84,7 +84,7 @@ const AdminDeposits = () => {
   };
 
   return (
-    <div className="space-y-4 p-4 lg:p-6 max-w-5xl mx-auto">
+    <div className="space-y-4 p-4 lg:p-6 max-w-5xl mx-auto w-full min-w-0 overflow-x-hidden">
       <h1 className="font-heading text-xl font-bold">Gerenciar Depósitos</h1>
 
       {/* Filters */}
