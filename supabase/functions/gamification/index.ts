@@ -20,8 +20,10 @@ Deno.serve(async (req) => {
 
     // Decode JWT payload directly (stateless, no session lookup)
     const token = authHeader.replace("Bearer ", "");
-    const payloadB64 = token.split(".")[1];
-    if (!payloadB64) throw new Error("Unauthorized");
+    const payloadB64url = token.split(".")[1];
+    if (!payloadB64url) throw new Error("Unauthorized");
+    // Convert base64url to standard base64
+    const payloadB64 = payloadB64url.replace(/-/g, "+").replace(/_/g, "/");
     const payload = JSON.parse(atob(payloadB64));
     const userId = payload.sub as string;
     if (!userId) throw new Error("Unauthorized");
