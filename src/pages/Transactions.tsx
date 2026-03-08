@@ -98,7 +98,7 @@ const Transactions = () => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 p-4 lg:p-6 max-w-4xl mx-auto w-full min-w-0 overflow-x-hidden">
       <h1 className="font-heading text-xl font-bold">Histórico de Transações</h1>
 
       {/* FILTERS */}
