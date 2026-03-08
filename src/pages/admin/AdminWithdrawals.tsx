@@ -48,13 +48,16 @@ const AdminWithdrawals = () => {
   const handleApprove = async () => {
     if (!approveModal) return;
     setActionLoading(true);
-    const { data, error } = await supabase.functions.invoke("admin-actions", {
-      body: { action: "approve_withdrawal", withdrawal_id: approveModal.id },
+
+    // Call Asaas payout to send PIX automatically
+    const { data, error } = await supabase.functions.invoke("asaas-payout", {
+      body: { withdrawal_id: approveModal.id },
     });
+
     if (error || !data?.ok) {
-      toast.error(data?.error || error?.message || "Erro ao aprovar");
+      toast.error(data?.error || error?.message || "Erro ao processar pagamento PIX");
     } else {
-      toast.success("Saque aprovado e finalizado.");
+      toast.success(`Saque aprovado! PIX enviado automaticamente via Asaas. (Transfer: ${data.asaas_transfer_id})`);
       fetchWithdrawals();
     }
     setApproveModal(null);
