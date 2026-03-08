@@ -135,7 +135,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <div className="p-4 border-b border-border">
               <span className="font-heading text-lg font-bold">Menu</span>
             </div>
-            <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
+            <nav className="flex-1 space-y-1 p-3 overflow-y-auto styled-scrollbar">
               {[...userNavItems, ...sidebarExtraItems].map((item) => (
                 <NavLink
                   key={item.to}
