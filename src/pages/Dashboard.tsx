@@ -414,7 +414,7 @@ const Dashboard = () => {
         <Button onClick={() => navigate("/team")} variant="outline" className="shrink-0 gap-2">
           <Users className="h-4 w-4" /> Minha Equipe
         </Button>
-        <Button onClick={() => setShowInvite(true)} variant="outline" className="shrink-0 gap-2">
+        <Button onClick={() => setShowInvite(true)} className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 gap-2">
           <Share2 className="h-4 w-4" /> Convidar
         </Button>
       </div>
