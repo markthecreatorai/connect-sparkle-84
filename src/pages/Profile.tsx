@@ -227,6 +227,7 @@ const Profile = () => {
       if (!data?.ok) throw new Error(data?.error || "Erro desconhecido");
 
       toast.success(hasPaymentPassword ? "Senha de pagamento alterada" : "Senha de pagamento criada");
+      setHasPaymentPassword(true);
       setCurrentPayPassword("");
       setNewPayPassword("");
       setConfirmPayPassword("");
