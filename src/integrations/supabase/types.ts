@@ -320,6 +320,7 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean | null
+          payment_password_hash: string | null
           phone: string | null
           pix_key: string | null
           pix_key_type: string | null
@@ -337,6 +338,7 @@ export type Database = {
           full_name: string
           id: string
           is_active?: boolean | null
+          payment_password_hash?: string | null
           phone?: string | null
           pix_key?: string | null
           pix_key_type?: string | null
@@ -354,6 +356,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean | null
+          payment_password_hash?: string | null
           phone?: string | null
           pix_key?: string | null
           pix_key_type?: string | null
