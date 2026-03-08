@@ -70,9 +70,9 @@ Deno.serve(async (req) => {
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 400;
+    const isAuth = message.includes("Forbidden") || message.includes("Unauthorized") || message.includes("Missing authorization");
     return new Response(JSON.stringify({ ok: false, error: message }), {
-      status,
+      status: isAuth ? 403 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
