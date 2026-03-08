@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,28 @@ import { toast } from "sonner";
 import { KeyRound, Loader2, CheckCircle } from "lucide-react";
 
 const ResetPassword = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const isRecovery = location.hash.includes("type=recovery");
-
+  const [isRecovery, setIsRecovery] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Listen for PASSWORD_RECOVERY event from Supabase
+  useEffect(() => {
+    // Check hash on mount (fallback)
+    if (window.location.hash.includes("type=recovery")) {
+      setIsRecovery(true);
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecovery(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +84,9 @@ const ResetPassword = () => {
           </h1>
           {!isRecovery && !sent && (
             <p className="mt-2 text-sm text-muted-foreground">Informe seu email ou telefone para receber o link</p>
+          )}
+          {isRecovery && (
+            <p className="mt-2 text-sm text-muted-foreground">Digite sua nova senha abaixo</p>
           )}
         </div>
 
