@@ -98,12 +98,12 @@ const Transactions = () => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 p-4 lg:p-6 max-w-4xl mx-auto w-full min-w-0 overflow-x-hidden">
       <h1 className="font-heading text-xl font-bold">Histórico de Transações</h1>
 
       {/* FILTERS */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex flex-wrap gap-1.5 pb-1">
           {TX_TYPES.map((t) => (
             <button
               key={t.value}

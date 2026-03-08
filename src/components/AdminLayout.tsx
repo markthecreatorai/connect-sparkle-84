@@ -117,8 +117,8 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
       )}
 
       {/* Content */}
-      <main className="flex-1 lg:ml-60">
-        <div className="pt-14 lg:pt-0 min-h-screen">{children}</div>
+      <main className="flex-1 lg:ml-60 min-w-0 overflow-x-hidden">
+        <div className="pt-14 lg:pt-0 min-h-screen w-full min-w-0">{children}</div>
       </main>
     </div>
   );

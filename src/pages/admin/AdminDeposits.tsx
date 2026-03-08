@@ -84,7 +84,7 @@ const AdminDeposits = () => {
   };
 
   return (
-    <div className="space-y-4 p-4 lg:p-6 max-w-5xl mx-auto">
+    <div className="space-y-4 p-4 lg:p-6 max-w-5xl mx-auto w-full min-w-0 overflow-x-hidden">
       <h1 className="font-heading text-xl font-bold">Gerenciar Depósitos</h1>
 
       {/* Filters */}
@@ -118,8 +118,8 @@ const AdminDeposits = () => {
           <p className="text-sm text-muted-foreground">Nenhum depósito encontrado</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto max-w-full -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full text-sm min-w-[500px] sm:min-w-0">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
                 <th className="pb-2 pr-3">Usuário</th>

@@ -282,7 +282,7 @@ const Dashboard = () => {
   // ─── render ─────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 p-4 lg:p-6 max-w-5xl mx-auto w-full min-w-0 overflow-x-hidden">
       {/* HEADER */}
       <div className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shrink-0">
@@ -401,7 +401,7 @@ const Dashboard = () => {
       </div>
 
       {/* ACTION BUTTONS */}
-      <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-none">
+      <div className="flex flex-wrap gap-2 sm:gap-3 pb-1">
         <Button onClick={() => navigate("/deposit")} className="bg-primary text-primary-foreground btn-glow shrink-0 gap-2">
           <ArrowDownCircle className="h-4 w-4" /> Depositar
         </Button>
