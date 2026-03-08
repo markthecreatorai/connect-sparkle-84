@@ -101,7 +101,14 @@ const Withdraw = () => {
   const tax = walletType === "recharge" ? 0 : Number(((amount * taxPercentage) / 100).toFixed(2));
   const netAmount = Number((amount - tax).toFixed(2));
 
-  const hasPaymentPassword = !!(profile as any)?.payment_password_hash;
+  const [hasPaymentPassword, setHasPaymentPassword] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.functions.invoke("payment-password", { body: { action: "check" } }).then(({ data }) => {
+      if (data?.ok) setHasPaymentPassword(!!data.has_password);
+    });
+  }, [user]);
 
   const canSubmit =
     !!user &&
