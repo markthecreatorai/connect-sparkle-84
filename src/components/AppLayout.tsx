@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import avengersLogo from "@/assets/avengers-logo.svg";
 import { cn } from "@/lib/utils";
 
 const userNavItems = [
@@ -70,9 +71,9 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       <aside className="hidden lg:flex w-60 flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
         <div className="flex items-center gap-2.5 px-5 py-6">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="font-heading text-sm text-primary-foreground">P</span>
+            <img src={avengersLogo} alt="AvengersPay" className="h-5 w-5 invert" />
           </div>
-          <span className="font-heading text-lg text-foreground">Plataforma</span>
+          <span className="font-heading text-lg text-foreground">AvengersPay</span>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 overflow-y-auto styled-scrollbar">
@@ -119,9 +120,9 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background px-4 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="font-heading text-xs text-primary-foreground">P</span>
+            <img src={avengersLogo} alt="AvengersPay" className="h-4 w-4 invert" />
           </div>
-          <span className="font-heading text-base text-foreground">Plataforma</span>
+          <span className="font-heading text-base text-foreground">AvengersPay</span>
         </div>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-foreground p-1 rounded-lg hover:bg-secondary">
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
