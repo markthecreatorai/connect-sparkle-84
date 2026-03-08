@@ -115,7 +115,7 @@ const Dashboard = () => {
     if (!user) return;
     const load = async () => {
       const todayIso = new Date().toISOString().slice(0, 10);
-      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes, checkinRes, spinRes, prevCheckinsRes] = await Promise.all([
+      const [txRes, walletsRes, n1Res, settingsRes, vipLevelsRes, taskTodayRes, gamificationRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("*")
@@ -145,9 +145,7 @@ const Dashboard = () => {
           .eq("user_id", user.id)
           .eq("task_date", todayIso)
           .maybeSingle(),
-        Promise.resolve({ data: null }),
-        Promise.resolve({ data: null }),
-        Promise.resolve({ data: [] }),
+        supabase.functions.invoke("gamification", { body: { action: "status" } }),
       ]);
 
       setTransactions(txRes.data ?? []);
