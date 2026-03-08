@@ -365,17 +365,21 @@ async function rejectWithdrawal(db: DB, withdrawalId: string, adminId: string, n
     approved_at: now,
   }).eq("reference_id", withdrawalId).eq("type", "withdrawal");
 
-  // Return funds: balance += amount, blocked_balance -= amount
-  const { data: profile } = await db
-    .from("profiles")
-    .select("balance, blocked_balance")
-    .eq("id", wd.user_id)
+  // Return funds to the correct wallet
+  const walletType = wd.wallet_type || "personal";
+  const { data: wallet } = await db
+    .from("wallets")
+    .select("id, balance")
+    .eq("user_id", wd.user_id)
+    .eq("wallet_type", walletType)
     .single();
 
-  await db.from("profiles").update({
-    balance: (profile?.balance ?? 0) + wd.amount,
-    blocked_balance: Math.max((profile?.blocked_balance ?? 0) - wd.amount, 0),
-  }).eq("id", wd.user_id);
+  if (wallet) {
+    await db.from("wallets").update({
+      balance: (wallet.balance ?? 0) + wd.amount,
+      updated_at: now,
+    }).eq("id", wallet.id);
+  }
 
   await logActivity(db, adminId, "withdrawal_rejected", {
     withdrawal_id: withdrawalId,

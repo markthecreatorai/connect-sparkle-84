@@ -118,20 +118,25 @@ const Withdraw = () => {
 
     setSubmitting(true);
 
-    const { error } = await supabase.from("withdrawals").insert({
-      user_id: user.id,
-      amount,
-      tax_amount: tax,
-      net_amount: netAmount,
-      wallet_type: walletType,
-      pix_key: pixKey.trim(),
-      pix_key_type: pixType,
-      payment_password_verified: true,
-      status: "pending",
-    } as any);
+    const { data, error } = await supabase.rpc("request_withdrawal" as any, {
+      _user_id: user.id,
+      _amount: amount,
+      _tax_amount: tax,
+      _net_amount: netAmount,
+      _wallet_type: walletType,
+      _pix_key: pixKey.trim(),
+      _pix_key_type: pixType,
+    });
 
     if (error) {
       toast.error(error.message || "Erro ao solicitar saque");
+      setSubmitting(false);
+      return;
+    }
+
+    const result = data as any;
+    if (!result?.success) {
+      toast.error(result?.error === 'insufficient_balance' ? 'Saldo insuficiente' : (result?.error || "Erro desconhecido"));
       setSubmitting(false);
       return;
     }
@@ -146,6 +151,15 @@ const Withdraw = () => {
       .eq("user_id", user.id)
       .order("requested_at", { ascending: false });
     setWithdrawals(wdRefresh ?? []);
+
+    // Refresh wallets
+    const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id);
+    const map: Record<WalletType, number> = { recharge: 0, personal: 0, income: 0 };
+    (wRes ?? []).forEach((w: any) => {
+      const k = w.wallet_type as WalletType;
+      if (k in map) map[k] = Number(w.balance || 0);
+    });
+    setWallets(map);
 
     setSubmitting(false);
   };

@@ -720,6 +720,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_daily_task: {
+        Args: { _task_id: string; _task_number: number; _user_id: string }
+        Returns: Json
+      }
       distribute_deposit_commissions: {
         Args: { p_deposit_amount: number; p_user_id: string }
         Returns: undefined
@@ -735,6 +739,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      request_withdrawal: {
+        Args: {
+          _amount: number
+          _net_amount: number
+          _pix_key: string
+          _pix_key_type: string
+          _tax_amount: number
+          _user_id: string
+          _wallet_type: string
+        }
+        Returns: Json
       }
       test_distribute_vip_commissions: {
         Args: { _user_id: string; _vip_plan_id: string }

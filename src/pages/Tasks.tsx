@@ -106,77 +106,39 @@ const Tasks = () => {
 
     setCompleting(true);
 
-    const reward = Number(dailyTask.reward_per_task || 0);
-    const nextCompleted = Number(dailyTask.tasks_completed || 0) + 1;
-    const nextTotal = Number(dailyTask.total_earned || 0) + reward;
-    const done = nextCompleted >= Number(dailyTask.tasks_required || 0);
+    const { data, error } = await supabase.rpc("complete_daily_task" as any, {
+      _user_id: user.id,
+      _task_id: dailyTask.id,
+      _task_number: openTask,
+    });
 
-    // 1) update daily_tasks
-    const upd = await supabase
-      .from("daily_tasks")
-      .update({
-        tasks_completed: nextCompleted,
-        total_earned: nextTotal,
-        is_completed: done,
-      })
-      .eq("id", dailyTask.id)
-      .select("*")
-      .maybeSingle();
-
-    if (upd.error) {
+    if (error) {
       toast.error("Falha ao concluir tarefa");
       setCompleting(false);
       return;
     }
 
-    // 2) credit wallet personal
-    const wRes = await supabase
-      .from("wallets")
-      .select("id,balance")
-      .eq("user_id", user.id)
-      .eq("wallet_type", "personal")
-      .maybeSingle();
-
-    if (!wRes.data) {
-      toast.error("Carteira pessoal não encontrada");
+    const result = data as any;
+    if (!result?.success) {
+      toast.error(result?.error || "Erro desconhecido");
       setCompleting(false);
       return;
     }
 
-    const currentBalance = Number((wRes.data as any).balance || 0);
-    const nextBalance = currentBalance + reward;
-
-    const wUpd = await supabase
-      .from("wallets")
-      .update({ balance: nextBalance, updated_at: new Date().toISOString() })
-      .eq("id", (wRes.data as any).id);
-
-    if (wUpd.error) {
-      toast.error("Falha ao creditar carteira");
-      setCompleting(false);
-      return;
-    }
-
-    // 3) transaction record
-    await supabase.from("transactions").insert({
-      user_id: user.id,
-      type: "task_reward",
-      wallet_type: "personal",
-      amount: reward,
-      balance_after: nextBalance,
-      description: `Tarefa ${openTask} concluída`,
-      metadata: { task_number: openTask, task_date: today },
-    } as any);
-
-    setDailyTask(upd.data);
+    setDailyTask({
+      ...dailyTask,
+      tasks_completed: result.tasks_completed,
+      total_earned: result.total_earned,
+      is_completed: result.is_completed,
+    });
     setOpenTask(null);
     setTimer(30);
     setCompleting(false);
 
-    if (done) {
+    if (result.is_completed) {
       toast.success("Parabéns! Você concluiu todas as tarefas do dia 🎉");
     } else {
-      toast.success(`Tarefa concluída! +${fmtBRL(reward)}`);
+      toast.success(`Tarefa concluída! +${fmtBRL(result.reward)}`);
     }
   };
 
