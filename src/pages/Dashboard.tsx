@@ -330,15 +330,15 @@ const Dashboard = () => {
           <p className="text-[11px] text-muted-foreground">Depósitos e investimentos</p>
         </div>
 
-        <div className="bg-card rounded-xl p-4 space-y-2 border border-warning/15 shadow-sm">
+        <div className="bg-card rounded-xl p-4 space-y-2 border border-accent/15 shadow-sm">
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-warning" />
+            <User className="h-4 w-4 text-accent" />
             <span className="text-xs font-medium text-muted-foreground">Carteira Pessoal</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-2xl font-bold text-warning">{fmtBRL(personalBalance)}</p>
+            <p className="font-mono text-2xl font-bold text-accent">{fmtBRL(personalBalance)}</p>
           )}
           <p className="text-[11px] text-muted-foreground">Tarefas, bônus e recompensas</p>
         </div>
