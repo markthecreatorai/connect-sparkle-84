@@ -13,28 +13,31 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Missing authorization");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) throw new Error("Unauthorized");
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: authErr } = await userClient.auth.getClaims(token);
+    if (authErr || !claimsData?.claims) throw new Error("Unauthorized");
+    const userId = claimsData.claims.sub as string;
 
     const db = createClient(supabaseUrl, serviceKey);
     const { action } = await req.json();
 
     if (action === "checkin") {
-      return await doCheckin(db, user.id);
+      return await doCheckin(db, userId);
     }
     if (action === "spin") {
-      return await doSpin(db, user.id);
+      return await doSpin(db, userId);
     }
     if (action === "status") {
-      return await getStatus(db, user.id);
+      return await getStatus(db, userId);
     }
 
     throw new Error(`Unknown action: ${action}`);

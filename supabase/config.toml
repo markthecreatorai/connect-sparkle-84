@@ -1,1 +1,16 @@
 project_id = "rxvdypoldfxzpfzpduie"
+
+[functions.gamification]
+verify_jwt = false
+
+[functions.admin-actions]
+verify_jwt = false
+
+[functions.manage-investment]
+verify_jwt = false
+
+[functions.payment-password]
+verify_jwt = false
+
+[functions.test-commission]
+verify_jwt = false
