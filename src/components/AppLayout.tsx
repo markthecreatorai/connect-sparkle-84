@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import avengersLogo from "@/assets/avengers-logo.svg";
 import { cn } from "@/lib/utils";
 
 const userNavItems = [
