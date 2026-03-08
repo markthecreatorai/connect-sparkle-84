@@ -17,14 +17,14 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) throw new Error("Unauthorized");
-    const userId = user.id;
+    // Decode JWT payload directly (stateless, no session lookup)
+    const token = authHeader.replace("Bearer ", "");
+    const payloadB64 = token.split(".")[1];
+    if (!payloadB64) throw new Error("Unauthorized");
+    const payload = JSON.parse(atob(payloadB64));
+    const userId = payload.sub as string;
+    if (!userId) throw new Error("Unauthorized");
 
     const db = createClient(supabaseUrl, serviceKey);
     const { action } = await req.json();
