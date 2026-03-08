@@ -40,8 +40,9 @@ Deno.serve(async (req) => {
     throw new Error(`Unknown action: ${action}`);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
+    const isAuthError = message.includes("Unauthorized") || message.includes("Missing authorization");
     return new Response(JSON.stringify({ ok: false, error: message }), {
-      status: 400,
+      status: isAuthError ? 401 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
