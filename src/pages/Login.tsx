@@ -34,10 +34,24 @@ const Login = () => {
 
     const pseudoEmail = `${phoneDigits}@plataforma.app`;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Try pseudo-email first (new standard)
+    let { data, error } = await supabase.auth.signInWithPassword({
       email: pseudoEmail,
       password,
     });
+
+    // If failed, try legacy email lookup by phone
+    if (error) {
+      const { data: realEmail } = await supabase.rpc("get_auth_email_by_phone", { _phone: phoneDigits });
+      if (realEmail && realEmail !== pseudoEmail) {
+        const result = await supabase.auth.signInWithPassword({
+          email: realEmail,
+          password,
+        });
+        data = result.data;
+        error = result.error;
+      }
+    }
 
     if (error) {
       toast.error("Telefone ou senha incorretos");
