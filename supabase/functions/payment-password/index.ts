@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,12 +7,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Legacy SHA-256 for migration compatibility
 async function hashSHA256(value: string): Promise<string> {
   const data = new TextEncoder().encode(value);
   const buf = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function isBcryptHash(hash: string): boolean {
+  return hash.startsWith("$2a$") || hash.startsWith("$2b$") || hash.startsWith("$2y$");
 }
 
 Deno.serve(async (req) => {
@@ -21,22 +27,24 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Missing authorization");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) throw new Error("Unauthorized");
+    // Decode JWT for user ID (stateless)
+    const token = authHeader.replace("Bearer ", "");
+    const payloadB64url = token.split(".")[1];
+    if (!payloadB64url) throw new Error("Unauthorized");
+    const payloadB64 = payloadB64url.replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(payloadB64));
+    const userId = payload.sub as string;
+    if (!userId) throw new Error("Unauthorized");
 
     const db = createClient(supabaseUrl, serviceKey);
     const { action, ...params } = await req.json();
 
     if (action === "set") {
-      // Set or change payment password
       const { password, current_password } = params;
 
       if (!/^\d{6}$/.test(password)) {
@@ -47,20 +55,27 @@ Deno.serve(async (req) => {
       const { data: profile } = await db
         .from("profiles")
         .select("payment_password_hash")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
       if (profile?.payment_password_hash) {
-        // Changing: verify current
+        // Changing: verify current password
         if (!current_password) throw new Error("Informe a senha atual");
-        const currentHash = await hashSHA256(current_password);
-        if (currentHash !== profile.payment_password_hash) {
-          throw new Error("Senha atual inválida");
+
+        let currentValid = false;
+        if (isBcryptHash(profile.payment_password_hash)) {
+          currentValid = await bcrypt.compare(current_password, profile.payment_password_hash);
+        } else {
+          // Legacy SHA-256 comparison
+          const currentHash = await hashSHA256(current_password);
+          currentValid = currentHash === profile.payment_password_hash;
         }
+        if (!currentValid) throw new Error("Senha atual inválida");
       }
 
-      const newHash = await hashSHA256(password);
-      await db.from("profiles").update({ payment_password_hash: newHash }).eq("id", user.id);
+      // Always hash with bcrypt going forward
+      const newHash = await bcrypt.hash(password);
+      await db.from("profiles").update({ payment_password_hash: newHash }).eq("id", userId);
 
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -79,15 +94,25 @@ Deno.serve(async (req) => {
       const { data: profile } = await db
         .from("profiles")
         .select("payment_password_hash")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
       if (!profile?.payment_password_hash) {
         throw new Error("Senha de pagamento não cadastrada");
       }
 
-      const hash = await hashSHA256(password);
-      const valid = hash === profile.payment_password_hash;
+      let valid = false;
+      if (isBcryptHash(profile.payment_password_hash)) {
+        valid = await bcrypt.compare(password, profile.payment_password_hash);
+      } else {
+        // Legacy SHA-256: verify and auto-upgrade to bcrypt
+        const hash = await hashSHA256(password);
+        valid = hash === profile.payment_password_hash;
+        if (valid) {
+          const upgradedHash = await bcrypt.hash(password);
+          await db.from("profiles").update({ payment_password_hash: upgradedHash }).eq("id", userId);
+        }
+      }
 
       return new Response(JSON.stringify({ ok: true, valid }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

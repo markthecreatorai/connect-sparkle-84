@@ -15,10 +15,8 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-const SAFE_URL = SUPABASE_URL || "https://rxvdypoldfxzpfzpduie.supabase.co";
-const SAFE_KEY =
-  SUPABASE_PUBLISHABLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4dmR5cG9sZGZ4enBmenBkdWllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMjk1NjAsImV4cCI6MjA4NjkwNTU2MH0.6kiVrALCCDgrurl65MxE88pAJsT8n68PTTP2UHjGHp0";
+const SAFE_URL = SUPABASE_URL || "https://example.supabase.co";
+const SAFE_KEY = SUPABASE_PUBLISHABLE_KEY || "public-anon-key";
 
 export const supabase = createClient<Database>(SAFE_URL, SAFE_KEY, {
   auth: {

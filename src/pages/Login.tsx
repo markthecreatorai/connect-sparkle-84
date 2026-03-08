@@ -32,55 +32,58 @@ const Login = () => {
       return;
     }
 
-    const pseudoEmail = `${phoneDigits}@plataforma.app`;
+    try {
+      // Use edge function for secure login (handles legacy email lookup server-side)
+      const { data, error } = await supabase.functions.invoke("login", {
+        body: { phone: phoneDigits, password },
+      });
 
-    // Try pseudo-email first (new standard)
-    let { data, error } = await supabase.auth.signInWithPassword({
-      email: pseudoEmail,
-      password,
-    });
-
-    // If failed, try legacy email lookup by phone
-    if (error) {
-      const { data: realEmail } = await supabase.rpc("get_auth_email_by_phone", { _phone: phoneDigits });
-      if (realEmail && realEmail !== pseudoEmail) {
-        const result = await supabase.auth.signInWithPassword({
-          email: realEmail,
-          password,
-        });
-        data = result.data;
-        error = result.error;
+      if (error || !data?.ok || !data?.session) {
+        toast.error("Telefone ou senha incorretos");
+        setLoading(false);
+        return;
       }
-    }
 
-    if (error) {
-      toast.error("Telefone ou senha incorretos");
+      // Set the session from the edge function response
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+
+      if (sessionError) {
+        toast.error("Erro ao estabelecer sessão");
+        setLoading(false);
+        return;
+      }
+
+      const userId = data.user.id;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_active")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profile && profile.is_active === false) {
+        await supabase.auth.signOut();
+        toast.error("Conta bloqueada. Entre em contato com o suporte.");
+        setLoading(false);
+        return;
+      }
+
+      const { data: adminRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+
       setLoading(false);
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_active")
-      .eq("id", data.user.id)
-      .maybeSingle();
-
-    if (profile && profile.is_active === false) {
-      await supabase.auth.signOut();
-      toast.error("Conta bloqueada. Entre em contato com o suporte.");
+      navigate(adminRole ? "/admin" : "/dashboard");
+    } catch {
+      toast.error("Erro ao fazer login");
       setLoading(false);
-      return;
     }
-
-    const { data: adminRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    setLoading(false);
-    navigate(adminRole ? "/admin" : "/dashboard");
   };
 
   return (
