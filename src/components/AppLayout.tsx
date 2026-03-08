@@ -32,6 +32,7 @@ const userNavItems = [
 
 const sidebarExtraItems = [
   { to: "/tasks", icon: CheckSquare, label: "Tarefas" },
+  { to: "/spin", icon: Shield, label: "Girar Escudo" },
   { to: "/investments", icon: TrendingUp, label: "Investimentos" },
   { to: "/transactions", icon: History, label: "Transações" },
   { to: "/invite", icon: Link2, label: "Convite" },

@@ -31,6 +31,7 @@ import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
 import Investments from "./pages/Investments";
 import Guide from "./pages/Guide";
+import SpinWheel from "./pages/SpinWheel";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/vip" element={<UserPage><VipPlans /></UserPage>} />
             <Route path="/investments" element={<UserPage><Investments /></UserPage>} />
             <Route path="/guide" element={<UserPage><Guide /></UserPage>} />
+            <Route path="/spin" element={<UserPage><SpinWheel /></UserPage>} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
