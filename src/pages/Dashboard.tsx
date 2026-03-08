@@ -508,20 +508,14 @@ const Dashboard = () => {
           <p className="text-xs text-muted-foreground">🔥 Streak: {checkinStreak} dia(s) consecutivos · +R$0,50/dia</p>
         </div>
 
-        <div className="bg-card rounded-xl p-4 space-y-3 border border-accent/15 shadow-sm">
+        <div
+          className="bg-card rounded-xl p-4 space-y-3 border border-accent/15 shadow-sm cursor-pointer hover:border-accent/30 transition-colors"
+          onClick={() => navigate("/spin")}
+        >
           <div className="flex items-center gap-2">
-            <RotateCw className={`h-4 w-4 text-accent ${spinLoading ? "animate-spin" : ""}`} />
+            <RotateCw className="h-4 w-4 text-accent" />
             <p className="text-sm font-semibold text-foreground">Girar o Escudo 🛡️</p>
           </div>
-          {spinResult !== null ? (
-            <p className={`text-lg font-bold ${spinResult > 0 ? "text-success" : "text-muted-foreground"}`}>
-              {spinResult > 0 ? `🎉 +R$${spinResult.toFixed(2)}!` : "Tente amanhã!"}
-            </p>
-          ) : (
-            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              {spinLoading ? "Girando..." : spinDone ? "Já girou hoje" : "Girar!"}
-            </Button>
-          )}
           <p className="text-xs text-muted-foreground">Prêmios: R$1 a R$100 · Disponível 1x/dia</p>
         </div>
       </div>
