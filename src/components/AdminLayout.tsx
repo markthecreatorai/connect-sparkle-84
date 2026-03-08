@@ -109,8 +109,8 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
       {/* Mobile drawer */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="relative z-50 w-64 bg-sidebar border-r border-border flex flex-col h-full">
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <aside className="relative z-50 w-64 bg-background border-r border-border flex flex-col h-full shadow-xl">
             <SidebarContent onNav={() => setOpen(false)} />
           </aside>
         </div>
