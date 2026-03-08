@@ -38,9 +38,9 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   const linkCls = (path: string) =>
     cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200",
+      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
       isActive(path)
-        ? "gradient-primary text-primary-foreground font-medium"
+        ? "bg-primary text-primary-foreground shadow-sm"
         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
     );
 
