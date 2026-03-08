@@ -73,7 +73,7 @@ const AdminReports = () => {
 
   return (
     <div className="space-y-4 p-4 lg:p-6 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-heading text-xl font-bold">Relatórios</h1>
         <Button
           variant="outline"
