@@ -256,7 +256,7 @@ const Guide = () => {
                   {Object.entries(investPlans).sort(([a], [b]) => Number(a) - Number(b)).map(([days, pct]) => (
                     <tr key={days} className="border-b border-border/30">
                       <td className="py-1.5 pr-2">{days} dias</td>
-                      <td className="py-1.5">{pct}%</td>
+                      <td className="py-1.5">{String(pct)}%</td>
                     </tr>
                   ))}
                 </tbody>
