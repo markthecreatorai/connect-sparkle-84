@@ -303,7 +303,7 @@ const AdminUsers = () => {
       {/* USER DETAIL MODAL */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 overflow-y-auto">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setSelected(null)} />
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setSelected(null)} />
           <div className="glass-card relative z-10 w-full max-w-lg rounded-2xl p-6 space-y-5 mb-10">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-lg font-bold">Detalhes do Usuário</h2>

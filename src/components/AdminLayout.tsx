@@ -38,17 +38,17 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   const linkCls = (path: string) =>
     cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200",
+      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
       isActive(path)
-        ? "gradient-primary text-primary-foreground font-medium"
+        ? "bg-primary text-primary-foreground shadow-sm"
         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
     );
 
   const SidebarContent = ({ onNav }: { onNav?: () => void }) => (
     <>
       <div className="flex items-center gap-2 px-5 py-6">
-        <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-          <span className="font-heading text-sm font-bold text-primary-foreground">A</span>
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+          <span className="font-heading text-sm text-primary-foreground">A</span>
         </div>
         <span className="font-heading text-lg font-bold text-foreground">Admin</span>
       </div>
@@ -109,8 +109,8 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
       {/* Mobile drawer */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="relative z-50 w-64 bg-sidebar border-r border-border flex flex-col h-full">
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <aside className="relative z-50 w-64 bg-background border-r border-border flex flex-col h-full shadow-xl">
             <SidebarContent onNav={() => setOpen(false)} />
           </aside>
         </div>

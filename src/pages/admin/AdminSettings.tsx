@@ -205,7 +205,7 @@ const AdminSettings = () => {
       {/* Confirmation Modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setConfirmModal(false)} />
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setConfirmModal(false)} />
           <div className="glass-card relative z-10 w-full max-w-sm rounded-2xl p-6 space-y-4">
             <h2 className="font-heading text-lg font-bold">Confirmar</h2>
             <p className="text-sm text-muted-foreground">Tem certeza que deseja atualizar as configurações?</p>
