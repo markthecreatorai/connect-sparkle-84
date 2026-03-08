@@ -134,7 +134,14 @@ const Profile = () => {
   const vip = VIP_META[vipLevel] ?? VIP_META[0];
   const VipIcon = vip.icon;
 
-  const hasPaymentPassword = !!(profile as any)?.payment_password_hash;
+  const [hasPaymentPassword, setHasPaymentPassword] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.functions.invoke("payment-password", { body: { action: "check" } }).then(({ data }) => {
+      if (data?.ok) setHasPaymentPassword(!!data.has_password);
+    });
+  }, [user]);
 
   const copyCode = async () => {
     if (!profile?.referral_code) return;
@@ -220,6 +227,7 @@ const Profile = () => {
       if (!data?.ok) throw new Error(data?.error || "Erro desconhecido");
 
       toast.success(hasPaymentPassword ? "Senha de pagamento alterada" : "Senha de pagamento criada");
+      setHasPaymentPassword(true);
       setCurrentPayPassword("");
       setNewPayPassword("");
       setConfirmPayPassword("");
