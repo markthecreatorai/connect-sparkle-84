@@ -216,7 +216,7 @@ const Dashboard = () => {
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
 
-  const inviteLink = `${window.location.origin}/register?ref=${profile?.referral_code ?? ""}`;
+  const inviteLink = `${getSiteUrl()}/register?ref=${profile?.referral_code ?? ""}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(inviteLink);

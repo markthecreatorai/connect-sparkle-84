@@ -122,7 +122,7 @@ const Team = () => {
 
   const referralLink = useMemo(() => {
     const code = profile?.referral_code || "";
-    return `${window.location.origin}/register?ref=${code}`;
+    return `${getSiteUrl()}/register?ref=${code}`;
   }, [profile?.referral_code]);
 
   const qrUrl = useMemo(() => {
