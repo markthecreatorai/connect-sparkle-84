@@ -55,6 +55,12 @@ Deno.serve(async (req) => {
       case "reject_withdrawal":
         result = await rejectWithdrawal(db, params.withdrawal_id, adminId, params.admin_notes ?? "");
         break;
+      case "update_password": {
+        const { error: pwErr } = await db.auth.admin.updateUserById(params.user_id, { password: params.new_password });
+        if (pwErr) throw new Error(pwErr.message);
+        result = { user_id: params.user_id, password_updated: true };
+        break;
+      }
       default:
         throw new Error(`Unknown action: ${action}`);
     }
