@@ -160,14 +160,13 @@ const Dashboard = () => {
       if (settingsRes.data) setVipReqs((settingsRes.data.value as any) ?? {});
       setVipLevels(((vipLevelsRes.data as unknown as VipLevelRow[]) ?? []));
       setTodayTasks((taskTodayRes.data as { tasks_completed: number; tasks_required: number } | null) ?? null);
-      setCheckinDone(!!checkinRes.data);
-      setSpinDone(!!spinRes.data);
-      if (checkinRes.data) {
-        setCheckinStreak(Number((checkinRes.data as any).streak_days || 1));
-      } else {
-        const prev = (prevCheckinsRes.data as any[]) ?? [];
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        setCheckinStreak(prev.some((r) => r.checkin_date === yesterday) ? 0 : 0);
+
+      // Gamification status
+      const gData = gamificationRes.data;
+      if (gData?.ok) {
+        setCheckinDone(!!gData.checkin_done);
+        setSpinDone(!!gData.spin_done);
+        setCheckinStreak(gData.streak ?? 0);
       }
 
       // Network counts
