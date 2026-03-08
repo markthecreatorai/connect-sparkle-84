@@ -193,7 +193,7 @@ const AdminDeposits = () => {
       {/* APPROVE MODAL */}
       {approveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => !actionLoading && setApproveModal(null)} />
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => !actionLoading && setApproveModal(null)} />
           <div className="glass-card relative z-10 w-full max-w-md rounded-2xl p-6 space-y-4">
             <h2 className="font-heading text-lg font-bold">Confirmar Aprovação</h2>
             <p className="text-sm text-muted-foreground">
