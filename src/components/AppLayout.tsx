@@ -71,7 +71,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       <aside className="hidden lg:flex w-60 flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
         <div className="flex items-center gap-2.5 px-5 py-6">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <img src={avengersLogo} alt="AvengersPay" className="h-5 w-5 invert" />
+            <img src={avengersLogo} alt="AvengersPay" className="h-7 w-7 invert" />
           </div>
           <span className="font-heading text-lg text-foreground">AvengersPay</span>
         </div>
