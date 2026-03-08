@@ -503,20 +503,28 @@ const Dashboard = () => {
           {checkinDone ? (
             <p className="text-sm text-success">Check-in feito hoje! Volte amanhã ✓</p>
           ) : (
-            <Button onClick={() => toast("Check-in em breve!")} className="gradient-primary text-primary-foreground">Fazer Check-in ✓</Button>
+            <Button onClick={handleCheckin} disabled={checkinLoading} className="gradient-primary text-primary-foreground">
+              {checkinLoading ? <><RotateCw className="h-4 w-4 mr-2 animate-spin" /> Fazendo...</> : "Fazer Check-in ✓"}
+            </Button>
           )}
-          <p className="text-xs text-muted-foreground">Streak: {checkinStreak} dia(s) consecutivos</p>
+          <p className="text-xs text-muted-foreground">🔥 Streak: {checkinStreak} dia(s) consecutivos · +R$0,50/dia</p>
         </div>
 
         <div className="glass-card rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <RotateCw className="h-4 w-4 text-warning" />
+            <RotateCw className={`h-4 w-4 text-warning ${spinLoading ? "animate-spin" : ""}`} />
             <p className="text-sm font-semibold">Girar o Escudo 🛡️</p>
           </div>
-          <Button onClick={() => toast("Spin em breve!")} disabled={spinDone} className="gradient-primary text-primary-foreground">
-            {spinDone ? "Já girou hoje" : "Girar!"}
-          </Button>
-          <p className="text-xs text-muted-foreground">Disponível 1x por dia</p>
+          {spinResult !== null ? (
+            <p className={`text-lg font-bold ${spinResult > 0 ? "text-success" : "text-muted-foreground"}`}>
+              {spinResult > 0 ? `🎉 +R$${spinResult.toFixed(2)}!` : "Tente amanhã!"}
+            </p>
+          ) : (
+            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="gradient-primary text-primary-foreground">
+              {spinLoading ? "Girando..." : spinDone ? "Já girou hoje" : "Girar!"}
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground">Prêmios: R$1 a R$100 · Disponível 1x/dia</p>
         </div>
       </div>
 
