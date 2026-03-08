@@ -13,14 +13,10 @@ Deno.serve(async (req) => {
   try {
     const { user_id, new_password } = await req.json();
     
-    // Verify caller has service role key
-    const authHeader = req.headers.get("authorization") ?? "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    if (!authHeader.includes(serviceKey)) {
-      throw new Error("Unauthorized");
-    }
+    if (!user_id || !new_password) throw new Error("Missing user_id or new_password");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const db = createClient(supabaseUrl, serviceKey);
 
     const { error } = await db.auth.admin.updateUserById(user_id, { password: new_password });
