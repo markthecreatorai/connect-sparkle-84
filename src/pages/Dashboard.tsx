@@ -103,6 +103,9 @@ const Dashboard = () => {
   const [checkinDone, setCheckinDone] = useState(false);
   const [checkinStreak, setCheckinStreak] = useState(0);
   const [spinDone, setSpinDone] = useState(false);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  const [spinLoading, setSpinLoading] = useState(false);
+  const [spinResult, setSpinResult] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [showVipLevels, setShowVipLevels] = useState(false);
