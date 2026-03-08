@@ -51,6 +51,59 @@ const Deposit = () => {
 
   const [selectedVip, setSelectedVip] = useState<any>(null);
 
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Polling: check deposit status every 5s when PIX is active
+  useEffect(() => {
+    if (!pixPayment?.deposit_id || !user) {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      return;
+    }
+
+    const checkStatus = async () => {
+      const { data } = await supabase
+        .from("deposits")
+        .select("status")
+        .eq("id", pixPayment.deposit_id)
+        .single();
+
+      if (data?.status === "approved") {
+        toast.success("✅ Pagamento confirmado! Seu saldo foi atualizado.");
+        setPixPayment(null);
+        refreshProfile();
+
+        // Reload deposits and wallets
+        const [depRes, walletRes] = await Promise.all([
+          supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id),
+        ]);
+        setDeposits(depRes.data ?? []);
+        const wm = { recharge: 0, personal: 0, income: 0 };
+        (walletRes.data ?? []).forEach((w: any) => {
+          if (w.wallet_type in wm) (wm as any)[w.wallet_type] = Number(w.balance ?? 0);
+        });
+        setWallets(wm);
+      } else if (data?.status === "rejected") {
+        toast.error("Pagamento rejeitado.");
+        setPixPayment(null);
+        const { data: deps } = await supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+        setDeposits(deps ?? []);
+      }
+    };
+
+    pollingRef.current = setInterval(checkStatus, 5000);
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [pixPayment?.deposit_id, user]);
+
   const vipLevel = Number(profile?.vip_level ?? 0);
   const vipCode = vipLevel <= 0 ? "intern" : `vip${vipLevel}`;
   const currentVip = vipLevels.find((v) => v.level_code === vipCode);
