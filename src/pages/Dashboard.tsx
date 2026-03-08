@@ -531,7 +531,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-lg text-foreground">Últimas Movimentações</h2>
           {transactions.length > 0 && (
-            <button onClick={() => navigate("/transactions")} className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
+            <button onClick={() => navigate("/transactions")} className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
               Ver tudo <ChevronRight className="h-3 w-3" />
             </button>
           )}
