@@ -45,6 +45,17 @@ Deno.serve(async (req) => {
     const db = createClient(supabaseUrl, serviceKey);
     const { action, ...params } = await req.json();
 
+    if (action === "check") {
+      const { data: profile } = await db
+        .from("profiles")
+        .select("payment_password_hash")
+        .eq("id", userId)
+        .single();
+      return new Response(JSON.stringify({ ok: true, has_password: !!profile?.payment_password_hash }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "set") {
       const { password, current_password } = params;
 
