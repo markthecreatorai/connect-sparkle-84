@@ -51,7 +51,6 @@ Deno.serve(async (req) => {
         throw new Error("Senha deve ter 6 dígitos numéricos");
       }
 
-      // Check if already has password
       const { data: profile } = await db
         .from("profiles")
         .select("payment_password_hash")
@@ -59,21 +58,18 @@ Deno.serve(async (req) => {
         .single();
 
       if (profile?.payment_password_hash) {
-        // Changing: verify current password
         if (!current_password) throw new Error("Informe a senha atual");
 
         let currentValid = false;
         if (isBcryptHash(profile.payment_password_hash)) {
           currentValid = await bcrypt.compare(current_password, profile.payment_password_hash);
         } else {
-          // Legacy SHA-256 comparison
           const currentHash = await hashSHA256(current_password);
           currentValid = currentHash === profile.payment_password_hash;
         }
         if (!currentValid) throw new Error("Senha atual inválida");
       }
 
-      // Always hash with bcrypt going forward
       const newHash = await bcrypt.hash(password);
       await db.from("profiles").update({ payment_password_hash: newHash }).eq("id", userId);
 
@@ -105,7 +101,6 @@ Deno.serve(async (req) => {
       if (isBcryptHash(profile.payment_password_hash)) {
         valid = await bcrypt.compare(password, profile.payment_password_hash);
       } else {
-        // Legacy SHA-256: verify and auto-upgrade to bcrypt
         const hash = await hashSHA256(password);
         valid = hash === profile.payment_password_hash;
         if (valid) {

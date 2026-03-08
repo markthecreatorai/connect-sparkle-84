@@ -33,7 +33,7 @@ const Login = () => {
     }
 
     try {
-      // Use edge function for secure login (handles legacy email lookup server-side)
+      // Use edge function for secure login (legacy mapping stays server-side)
       const { data, error } = await supabase.functions.invoke("login", {
         body: { phone: phoneDigits, password },
       });
@@ -44,7 +44,6 @@ const Login = () => {
         return;
       }
 
-      // Set the session from the edge function response
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
