@@ -11,15 +11,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, new_password, secret } = await req.json();
+    const { user_id, new_password } = await req.json();
     
-    const debugSecret = Deno.env.get("DEBUG_SECRET");
-    if (!secret || secret !== debugSecret) {
-      throw new Error("Invalid secret");
+    // Verify caller has service role key
+    const authHeader = req.headers.get("authorization") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!authHeader.includes(serviceKey)) {
+      throw new Error("Unauthorized");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const db = createClient(supabaseUrl, serviceKey);
 
     const { error } = await db.auth.admin.updateUserById(user_id, { password: new_password });
