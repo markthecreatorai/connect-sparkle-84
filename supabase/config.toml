@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.test-commission]
 verify_jwt = false
+
+[functions.login]
+verify_jwt = false
