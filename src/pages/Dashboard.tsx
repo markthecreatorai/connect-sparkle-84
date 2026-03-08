@@ -330,15 +330,15 @@ const Dashboard = () => {
           <p className="text-[11px] text-muted-foreground">Depósitos e investimentos</p>
         </div>
 
-        <div className="bg-card rounded-xl p-4 space-y-2 border border-warning/15 shadow-sm">
+        <div className="bg-card rounded-xl p-4 space-y-2 border border-accent/15 shadow-sm">
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-warning" />
+            <User className="h-4 w-4 text-accent" />
             <span className="text-xs font-medium text-muted-foreground">Carteira Pessoal</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-2xl font-bold text-warning">{fmtBRL(personalBalance)}</p>
+            <p className="font-mono text-2xl font-bold text-accent">{fmtBRL(personalBalance)}</p>
           )}
           <p className="text-[11px] text-muted-foreground">Tarefas, bônus e recompensas</p>
         </div>
@@ -414,7 +414,7 @@ const Dashboard = () => {
         <Button onClick={() => navigate("/team")} variant="outline" className="shrink-0 gap-2">
           <Users className="h-4 w-4" /> Minha Equipe
         </Button>
-        <Button onClick={() => setShowInvite(true)} variant="outline" className="shrink-0 gap-2">
+        <Button onClick={() => setShowInvite(true)} className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 gap-2">
           <Share2 className="h-4 w-4" /> Convidar
         </Button>
       </div>
@@ -507,9 +507,9 @@ const Dashboard = () => {
           <p className="text-xs text-muted-foreground">🔥 Streak: {checkinStreak} dia(s) consecutivos · +R$0,50/dia</p>
         </div>
 
-        <div className="bg-card rounded-xl p-4 space-y-3 border border-border shadow-sm">
+        <div className="bg-card rounded-xl p-4 space-y-3 border border-accent/15 shadow-sm">
           <div className="flex items-center gap-2">
-            <RotateCw className={`h-4 w-4 text-destructive ${spinLoading ? "animate-spin" : ""}`} />
+            <RotateCw className={`h-4 w-4 text-accent ${spinLoading ? "animate-spin" : ""}`} />
             <p className="text-sm font-semibold text-foreground">Girar o Escudo 🛡️</p>
           </div>
           {spinResult !== null ? (
@@ -517,7 +517,7 @@ const Dashboard = () => {
               {spinResult > 0 ? `🎉 +R$${spinResult.toFixed(2)}!` : "Tente amanhã!"}
             </p>
           ) : (
-            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="bg-primary text-primary-foreground">
+            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
               {spinLoading ? "Girando..." : spinDone ? "Já girou hoje" : "Girar!"}
             </Button>
           )}
@@ -530,7 +530,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-lg text-foreground">Últimas Movimentações</h2>
           {transactions.length > 0 && (
-            <button onClick={() => navigate("/transactions")} className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
+            <button onClick={() => navigate("/transactions")} className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
               Ver tudo <ChevronRight className="h-3 w-3" />
             </button>
           )}
