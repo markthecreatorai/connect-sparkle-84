@@ -56,7 +56,7 @@ const AdminUsers = () => {
     setLoading(true);
     let query = supabase
       .from("profiles")
-      .select("*", { count: "exact" })
+      .select("id, full_name, email, phone, referral_code, vip_level, balance, blocked_balance, is_active, pix_key, pix_key_type, referred_by, created_at", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 

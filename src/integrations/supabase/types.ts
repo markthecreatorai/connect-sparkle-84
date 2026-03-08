@@ -819,6 +819,31 @@ export type Database = {
       }
       generate_referral_code_standalone: { Args: never; Returns: string }
       get_auth_email_by_phone: { Args: { _phone: string }; Returns: string }
+      get_public_platform_config: {
+        Args: { _keys: string[] }
+        Returns: {
+          key: string
+          value: Json
+        }[]
+      }
+      get_public_platform_settings: {
+        Args: { _keys: string[] }
+        Returns: {
+          key: string
+          value: Json
+        }[]
+      }
+      get_referral_profiles: {
+        Args: { _referrer_id: string }
+        Returns: {
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          referral_code: string
+          vip_level: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
