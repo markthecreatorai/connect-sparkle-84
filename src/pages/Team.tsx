@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getSiteUrl } from "@/lib/site-url";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -121,7 +122,7 @@ const Team = () => {
 
   const referralLink = useMemo(() => {
     const code = profile?.referral_code || "";
-    return `${window.location.origin}/register?ref=${code}`;
+    return `${getSiteUrl()}/register?ref=${code}`;
   }, [profile?.referral_code]);
 
   const qrUrl = useMemo(() => {

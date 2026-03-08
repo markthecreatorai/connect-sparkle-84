@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getSiteUrl } from "@/lib/site-url";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ const Invite = () => {
   const [loading, setLoading] = useState(true);
   const [percents, setPercents] = useState<{ n1: number; n2: number; n3: number }>({ n1: 0, n2: 0, n3: 0 });
 
-  const inviteLink = `${window.location.origin}/register?ref=${profile?.referral_code ?? ""}`;
+  const inviteLink = `${getSiteUrl()}/register?ref=${profile?.referral_code ?? ""}`;
 
   useEffect(() => {
     const load = async () => {
