@@ -35,6 +35,7 @@ const sidebarExtraItems = [
   { to: "/investments", icon: TrendingUp, label: "Investimentos" },
   { to: "/transactions", icon: History, label: "Transações" },
   { to: "/invite", icon: Link2, label: "Convite" },
+  { to: "/guide", icon: BookOpen, label: "Como Funciona" },
 ];
 
 const adminItems = [
