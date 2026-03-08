@@ -740,6 +740,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      request_withdrawal: {
+        Args: {
+          _amount: number
+          _net_amount: number
+          _pix_key: string
+          _pix_key_type: string
+          _tax_amount: number
+          _user_id: string
+          _wallet_type: string
+        }
+        Returns: Json
+      }
       test_distribute_vip_commissions: {
         Args: { _user_id: string; _vip_plan_id: string }
         Returns: Json
