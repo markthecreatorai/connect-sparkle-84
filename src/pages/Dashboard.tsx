@@ -47,24 +47,24 @@ const fmtBRL = (v: number) =>
 
 const VIP_META: Record<number, { icon: typeof Shield; color: string; label: string }> = {
   0: { icon: Shield, color: "#6B7280", label: "VIP 0" },
-  1: { icon: Award, color: "#CD7F32", label: "VIP 1" },
-  2: { icon: Award, color: "#C0C0C0", label: "VIP 2" },
-  3: { icon: Crown, color: "#FFD700", label: "VIP 3" },
-  4: { icon: Diamond, color: "#A855F7", label: "VIP 4" },
+  1: { icon: Award, color: "#B45309", label: "VIP 1" },
+  2: { icon: Award, color: "#6B7280", label: "VIP 2" },
+  3: { icon: Crown, color: "#D97706", label: "VIP 3" },
+  4: { icon: Diamond, color: "#1E3A8A", label: "VIP 4" },
 };
 
 const TX_ICON: Record<string, { icon: typeof ArrowDown; color: string }> = {
   deposit: { icon: ArrowDown, color: "text-success" },
   withdrawal: { icon: ArrowUp, color: "text-destructive" },
   commission: { icon: Star, color: "text-primary" },
-  bonus: { icon: Gift, color: "text-accent" },
+  bonus: { icon: Gift, color: "text-primary" },
   adjustment: { icon: Settings, color: "text-muted-foreground" },
 };
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  pending: { label: "Pendente", cls: "bg-warning/20 text-warning" },
-  approved: { label: "Aprovado", cls: "bg-success/20 text-success" },
-  rejected: { label: "Recusado", cls: "bg-destructive/20 text-destructive" },
+  pending: { label: "Pendente", cls: "bg-warning/15 text-warning" },
+  approved: { label: "Aprovado", cls: "bg-success/15 text-success" },
+  rejected: { label: "Recusado", cls: "bg-destructive/15 text-destructive" },
   cancelled: { label: "Cancelado", cls: "bg-muted text-muted-foreground" },
 };
 
@@ -242,7 +242,6 @@ const Dashboard = () => {
       setCheckinDone(true);
       setCheckinStreak(data.streak ?? checkinStreak + 1);
       toast.success(`Check-in feito! +R$0,50 · Streak: ${data.streak} dia(s) 🔥`);
-      // Refresh wallets
       const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user!.id);
       const wMap = { recharge: 0, personal: 0, income: 0 };
       (wRes ?? []).forEach((w: any) => { if (w.wallet_type in wMap) (wMap as any)[w.wallet_type] = Number(w.balance ?? 0); });
@@ -262,13 +261,11 @@ const Dashboard = () => {
       });
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || "Erro");
-      // Simulate spin delay
       await new Promise((r) => setTimeout(r, 2000));
       setSpinResult(data.prize);
       setSpinDone(true);
       if (data.prize > 0) {
         toast.success(`🎉 Parabéns! Você ganhou R$${Number(data.prize).toFixed(2)}!`);
-        // Refresh wallets
         const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user!.id);
         const wMap = { recharge: 0, personal: 0, income: 0 };
         (wRes ?? []).forEach((w: any) => { if (w.wallet_type in wMap) (wMap as any)[w.wallet_type] = Number(w.balance ?? 0); });
@@ -288,14 +285,14 @@ const Dashboard = () => {
     <div className="space-y-6 p-4 lg:p-6 max-w-5xl mx-auto">
       {/* HEADER */}
       <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-full gradient-primary flex items-center justify-center shrink-0">
-          <span className="font-heading text-sm font-bold text-primary-foreground">{loading ? "…" : initials}</span>
+        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shrink-0">
+          <span className="font-heading text-sm text-primary-foreground">{loading ? "…" : initials}</span>
         </div>
         <div className="flex-1 min-w-0">
           {loading ? (
             <Skeleton className="h-6 w-48" />
           ) : (
-            <h1 className="font-heading text-xl font-bold truncate">
+            <h1 className="font-heading text-xl truncate text-foreground">
               {greeting()}, {firstName}!
             </h1>
           )}
@@ -304,10 +301,10 @@ const Dashboard = () => {
               <Skeleton className="h-5 w-20" />
             ) : (
               <span
-                className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${vipLevel === 4 ? "animate-pulse" : ""}`}
+                className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
                 style={{
                   color: vip.color,
-                  background: `${vip.color}20`,
+                  background: `${vip.color}15`,
                 }}
               >
                 <VipIcon className="h-3 w-3" />
@@ -320,52 +317,52 @@ const Dashboard = () => {
 
       {/* 3 CARTEIRAS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="glass-card rounded-xl p-4 space-y-2 border border-primary/20">
+        <div className="bg-card rounded-xl p-4 space-y-2 border border-primary/15 shadow-sm">
           <div className="flex items-center gap-2">
             <Wallet className="h-4 w-4 text-primary" />
-            <span className="text-xs text-muted-foreground">Carteira de Recarga</span>
+            <span className="text-xs font-medium text-muted-foreground">Carteira de Recarga</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-[1.75rem] leading-tight font-bold text-primary">{fmtBRL(rechargeBalance)}</p>
+            <p className="font-mono text-2xl font-bold text-primary">{fmtBRL(rechargeBalance)}</p>
           )}
-          <p className="text-[10px] text-muted-foreground">Depósitos e investimentos</p>
+          <p className="text-[11px] text-muted-foreground">Depósitos e investimentos</p>
         </div>
 
-        <div className="glass-card rounded-xl p-4 space-y-2 border border-warning/20">
+        <div className="bg-card rounded-xl p-4 space-y-2 border border-warning/15 shadow-sm">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-warning" />
-            <span className="text-xs text-muted-foreground">Carteira Pessoal</span>
+            <span className="text-xs font-medium text-muted-foreground">Carteira Pessoal</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-[1.75rem] leading-tight font-bold text-warning">{fmtBRL(personalBalance)}</p>
+            <p className="font-mono text-2xl font-bold text-warning">{fmtBRL(personalBalance)}</p>
           )}
-          <p className="text-[10px] text-muted-foreground">Tarefas, bônus e recompensas</p>
+          <p className="text-[11px] text-muted-foreground">Tarefas, bônus e recompensas</p>
         </div>
 
-        <div className="glass-card rounded-xl p-4 space-y-2 border border-success/20">
+        <div className="bg-card rounded-xl p-4 space-y-2 border border-success/15 shadow-sm">
           <div className="flex items-center gap-2">
             <Users2 className="h-4 w-4 text-success" />
-            <span className="text-xs text-muted-foreground">Carteira de Renda</span>
+            <span className="text-xs font-medium text-muted-foreground">Carteira de Renda</span>
           </div>
           {loading ? (
             <Skeleton className="h-8 w-28" />
           ) : (
-            <p className="font-mono text-[1.75rem] leading-tight font-bold text-success">{fmtBRL(incomeBalance)}</p>
+            <p className="font-mono text-2xl font-bold text-success">{fmtBRL(incomeBalance)}</p>
           )}
-          <p className="text-[10px] text-muted-foreground">Comissões da equipe</p>
+          <p className="text-[11px] text-muted-foreground">Comissões da equipe</p>
         </div>
       </div>
 
       {/* CARD VIP */}
-      <div className="glass-card rounded-xl p-4 space-y-3">
+      <div className="bg-card rounded-xl p-4 space-y-3 border border-border shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <VipIcon className="h-4 w-4" style={{ color: vip.color }} />
-            <span className="text-xs text-muted-foreground">Nível VIP</span>
+            <span className="text-xs font-medium text-muted-foreground">Nível VIP</span>
           </div>
           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowVipLevels(true)}>
             Ver todos os níveis
@@ -375,7 +372,7 @@ const Dashboard = () => {
           <Skeleton className="h-8 w-20" />
         ) : (
           <>
-            <p className="font-heading text-2xl font-bold" style={{ color: vip.color }}>
+            <p className="font-heading text-2xl" style={{ color: vip.color }}>
               {currentVipConfig?.display_name ?? vip.label}
             </p>
             <p className="text-[11px] text-muted-foreground">
@@ -388,7 +385,7 @@ const Dashboard = () => {
               <div className="space-y-1">
                 <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
                   <div
-                    className="h-full rounded-full gradient-primary transition-all duration-500"
+                    className="h-full rounded-full bg-primary transition-all duration-500"
                     style={{ width: `${Math.min((network.n1 / (reqForNext || 1)) * 100, 100)}%` }}
                   />
                 </div>
@@ -405,19 +402,19 @@ const Dashboard = () => {
 
       {/* ACTION BUTTONS */}
       <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-none">
-        <Button onClick={() => navigate("/deposit")} className="gradient-primary btn-glow text-primary-foreground shrink-0 gap-2">
+        <Button onClick={() => navigate("/deposit")} className="bg-primary text-primary-foreground btn-glow shrink-0 gap-2">
           <ArrowDownCircle className="h-4 w-4" /> Depositar
         </Button>
-        <Button onClick={() => navigate("/withdraw")} variant="outline" className="shrink-0 gap-2 border-border">
+        <Button onClick={() => navigate("/withdraw")} variant="outline" className="shrink-0 gap-2">
           <ArrowUpCircle className="h-4 w-4" /> Sacar
         </Button>
-        <Button onClick={() => navigate("/tasks")} variant="outline" className="shrink-0 gap-2 border-border">
+        <Button onClick={() => navigate("/tasks")} variant="outline" className="shrink-0 gap-2">
           <CheckSquare className="h-4 w-4" /> Minhas Tarefas
         </Button>
-        <Button onClick={() => navigate("/team")} variant="outline" className="shrink-0 gap-2 border-border">
+        <Button onClick={() => navigate("/team")} variant="outline" className="shrink-0 gap-2">
           <Users className="h-4 w-4" /> Minha Equipe
         </Button>
-        <Button onClick={() => setShowInvite(true)} variant="outline" className="shrink-0 gap-2 border-border">
+        <Button onClick={() => setShowInvite(true)} variant="outline" className="shrink-0 gap-2">
           <Share2 className="h-4 w-4" /> Convidar
         </Button>
       </div>
@@ -425,10 +422,10 @@ const Dashboard = () => {
       {/* INVITE MODAL */}
       {showInvite && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setShowInvite(false)} />
-          <div className="glass-card relative z-10 w-full max-w-md rounded-2xl p-6 space-y-4">
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setShowInvite(false)} />
+          <div className="bg-card relative z-10 w-full max-w-md rounded-xl p-6 space-y-4 border border-border shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-bold">Convidar Amigos</h2>
+              <h2 className="font-heading text-lg text-foreground">Convidar Amigos</h2>
               <button onClick={() => setShowInvite(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
@@ -440,7 +437,7 @@ const Dashboard = () => {
               <Button onClick={copyLink} className="flex-1 gap-2" variant={copied ? "default" : "outline"}>
                 {copied ? <><Check className="h-4 w-4" /> Copiado!</> : <><Copy className="h-4 w-4" /> Copiar Link</>}
               </Button>
-              <Button onClick={shareLink} className="flex-1 gradient-primary btn-glow text-primary-foreground gap-2">
+              <Button onClick={shareLink} className="flex-1 bg-primary text-primary-foreground btn-glow gap-2">
                 <Share2 className="h-4 w-4" /> Compartilhar
               </Button>
             </div>
@@ -450,10 +447,10 @@ const Dashboard = () => {
 
       {showVipLevels && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setShowVipLevels(false)} />
-          <div className="glass-card relative z-10 w-full max-w-4xl rounded-2xl p-4 md:p-6 space-y-4 max-h-[85vh] overflow-auto styled-scrollbar">
+          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setShowVipLevels(false)} />
+          <div className="bg-card relative z-10 w-full max-w-4xl rounded-xl p-4 md:p-6 space-y-4 max-h-[85vh] overflow-auto styled-scrollbar border border-border shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-bold">Todos os níveis VIP</h2>
+              <h2 className="font-heading text-lg text-foreground">Todos os níveis VIP</h2>
               <button onClick={() => setShowVipLevels(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
@@ -462,19 +459,19 @@ const Dashboard = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-muted-foreground border-b border-border">
-                    <th className="py-2 pr-3">Nível</th>
-                    <th className="py-2 pr-3">Depósito</th>
-                    <th className="py-2 pr-3">Tarefas/dia</th>
-                    <th className="py-2 pr-3">Renda/Tarefa</th>
-                    <th className="py-2 pr-3">Renda Diária</th>
-                    <th className="py-2 pr-3">Renda Mensal</th>
+                    <th className="py-2 pr-3 font-medium">Nível</th>
+                    <th className="py-2 pr-3 font-medium">Depósito</th>
+                    <th className="py-2 pr-3 font-medium">Tarefas/dia</th>
+                    <th className="py-2 pr-3 font-medium">Renda/Tarefa</th>
+                    <th className="py-2 pr-3 font-medium">Renda Diária</th>
+                    <th className="py-2 pr-3 font-medium">Renda Mensal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {vipLevels.map((v) => {
                     const isCurrent = v.level_code === codeForLevel(vipLevel);
                     return (
-                      <tr key={v.level_code} className={`border-b border-border/50 ${isCurrent ? "bg-primary/10" : ""}`}>
+                      <tr key={v.level_code} className={`border-b border-border/50 ${isCurrent ? "bg-primary/5" : ""}`}>
                         <td className="py-2 pr-3 font-medium">
                           {v.display_name} {!v.is_available ? "🔒 Em breve" : ""}
                         </td>
@@ -495,32 +492,32 @@ const Dashboard = () => {
 
       {/* GAMIFICAÇÃO */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="glass-card rounded-xl p-4 space-y-3">
+        <div className="bg-card rounded-xl p-4 space-y-3 border border-border shadow-sm">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-primary" />
-            <p className="text-sm font-semibold">Check-in Diário</p>
+            <p className="text-sm font-semibold text-foreground">Check-in Diário</p>
           </div>
           {checkinDone ? (
-            <p className="text-sm text-success">Check-in feito hoje! Volte amanhã ✓</p>
+            <p className="text-sm text-success font-medium">Check-in feito hoje! Volte amanhã ✓</p>
           ) : (
-            <Button onClick={handleCheckin} disabled={checkinLoading} className="gradient-primary text-primary-foreground">
+            <Button onClick={handleCheckin} disabled={checkinLoading} className="bg-primary text-primary-foreground">
               {checkinLoading ? <><RotateCw className="h-4 w-4 mr-2 animate-spin" /> Fazendo...</> : "Fazer Check-in ✓"}
             </Button>
           )}
           <p className="text-xs text-muted-foreground">🔥 Streak: {checkinStreak} dia(s) consecutivos · +R$0,50/dia</p>
         </div>
 
-        <div className="glass-card rounded-xl p-4 space-y-3">
+        <div className="bg-card rounded-xl p-4 space-y-3 border border-border shadow-sm">
           <div className="flex items-center gap-2">
-            <RotateCw className={`h-4 w-4 text-warning ${spinLoading ? "animate-spin" : ""}`} />
-            <p className="text-sm font-semibold">Girar o Escudo 🛡️</p>
+            <RotateCw className={`h-4 w-4 text-destructive ${spinLoading ? "animate-spin" : ""}`} />
+            <p className="text-sm font-semibold text-foreground">Girar o Escudo 🛡️</p>
           </div>
           {spinResult !== null ? (
             <p className={`text-lg font-bold ${spinResult > 0 ? "text-success" : "text-muted-foreground"}`}>
               {spinResult > 0 ? `🎉 +R$${spinResult.toFixed(2)}!` : "Tente amanhã!"}
             </p>
           ) : (
-            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="gradient-primary text-primary-foreground">
+            <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="bg-primary text-primary-foreground">
               {spinLoading ? "Girando..." : spinDone ? "Já girou hoje" : "Girar!"}
             </Button>
           )}
@@ -531,9 +528,9 @@ const Dashboard = () => {
       {/* TRANSACTIONS */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-heading text-lg font-bold">Últimas Movimentações</h2>
+          <h2 className="font-heading text-lg text-foreground">Últimas Movimentações</h2>
           {transactions.length > 0 && (
-            <button onClick={() => navigate("/transactions")} className="text-xs text-primary hover:underline flex items-center gap-1">
+            <button onClick={() => navigate("/transactions")} className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
               Ver tudo <ChevronRight className="h-3 w-3" />
             </button>
           )}
@@ -546,10 +543,10 @@ const Dashboard = () => {
             ))}
           </div>
         ) : transactions.length === 0 ? (
-          <div className="glass-card rounded-xl p-8 text-center space-y-3">
+          <div className="bg-card rounded-xl p-8 text-center space-y-3 border border-border shadow-sm">
             <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Nenhuma movimentação ainda</p>
-            <Button onClick={() => navigate("/deposit")} className="gradient-primary btn-glow text-primary-foreground gap-2">
+            <Button onClick={() => navigate("/deposit")} className="bg-primary text-primary-foreground btn-glow gap-2">
               <ArrowDownCircle className="h-4 w-4" /> Fazer primeiro depósito
             </Button>
           </div>
@@ -562,12 +559,12 @@ const Dashboard = () => {
               const isPositive = ["deposit", "commission", "bonus"].includes(tx.type);
 
               return (
-                <div key={tx.id} className="glass-card rounded-xl p-4 flex items-center gap-3">
+                <div key={tx.id} className="bg-card rounded-xl p-4 flex items-center gap-3 border border-border shadow-sm">
                   <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${meta.color} bg-secondary`}>
                     <TxIcon className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.description || tx.type}</p>
+                    <p className="text-sm font-medium truncate text-foreground">{tx.description || tx.type}</p>
                     <p className="text-[10px] text-muted-foreground">
                       {tx.created_at
                         ? formatDistanceToNow(new Date(tx.created_at), { addSuffix: true, locale: ptBR })
@@ -578,7 +575,7 @@ const Dashboard = () => {
                     <p className={`font-mono text-sm font-bold ${isPositive ? "text-success" : "text-destructive"}`}>
                       {isPositive ? "+" : "-"}{fmtBRL(Math.abs(tx.amount))}
                     </p>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${status.cls}`}>{status.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${status.cls}`}>{status.label}</span>
                   </div>
                 </div>
               );
