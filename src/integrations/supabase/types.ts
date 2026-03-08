@@ -803,6 +803,7 @@ export type Database = {
         Returns: Json
       }
       generate_referral_code_standalone: { Args: never; Returns: string }
+      get_auth_email_by_phone: { Args: { _phone: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
