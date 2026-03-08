@@ -520,7 +520,6 @@ const Dashboard = () => {
             <Button onClick={handleSpin} disabled={spinDone || spinLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
               {spinLoading ? "Girando..." : spinDone ? "Já girou hoje" : "Girar!"}
             </Button>
-            </Button>
           )}
           <p className="text-xs text-muted-foreground">Prêmios: R$1 a R$100 · Disponível 1x/dia</p>
         </div>
