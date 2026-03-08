@@ -125,8 +125,8 @@ const AdminReports = () => {
         ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sem dados no período.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto max-w-full -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full text-sm min-w-[500px] sm:min-w-0">
               <thead>
                 <tr className="text-left text-xs text-muted-foreground border-b border-border">
                   <th className="py-2 pr-2">Data</th>

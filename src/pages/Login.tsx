@@ -86,8 +86,8 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="glass-card w-full max-w-[420px] rounded-2xl p-8">
+    <div className="flex min-h-screen items-center justify-center px-4 py-6 w-full max-w-full overflow-x-hidden">
+      <div className="glass-card w-full max-w-[420px] rounded-2xl p-6 sm:p-8">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-xl gradient-primary flex items-center justify-center">
             <LogIn className="h-6 w-6 text-primary-foreground" />

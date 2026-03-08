@@ -103,7 +103,7 @@ const Transactions = () => {
 
       {/* FILTERS */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex flex-wrap gap-1.5 pb-1">
           {TX_TYPES.map((t) => (
             <button
               key={t.value}

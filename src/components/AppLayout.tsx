@@ -181,8 +181,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-60">
-        <div className="pt-14 pb-20 lg:pt-0 lg:pb-0 min-h-screen bg-secondary/30">
+      <main className="flex-1 lg:ml-60 min-w-0 overflow-x-hidden">
+        <div className="pt-14 pb-20 lg:pt-0 lg:pb-0 min-h-screen bg-secondary/30 w-full min-w-0">
           {children}
         </div>
       </main>
