@@ -31,13 +31,13 @@ Deno.serve(async (req) => {
     const { action } = await req.json();
 
     if (action === "checkin") {
-      return await doCheckin(db, user.id);
+      return await doCheckin(db, userId);
     }
     if (action === "spin") {
-      return await doSpin(db, user.id);
+      return await doSpin(db, userId);
     }
     if (action === "status") {
-      return await getStatus(db, user.id);
+      return await getStatus(db, userId);
     }
 
     throw new Error(`Unknown action: ${action}`);
