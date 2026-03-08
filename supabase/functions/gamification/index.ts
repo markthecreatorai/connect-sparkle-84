@@ -16,17 +16,17 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) throw new Error("Missing authorization");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Decode JWT payload directly (stateless, no session lookup)
+    // Verify JWT using Supabase Auth (cryptographic verification)
     const token = authHeader.replace("Bearer ", "");
-    const payloadB64url = token.split(".")[1];
-    if (!payloadB64url) throw new Error("Unauthorized");
-    // Convert base64url to standard base64
-    const payloadB64 = payloadB64url.replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(payloadB64));
-    const userId = payload.sub as string;
-    if (!userId) throw new Error("Unauthorized");
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) throw new Error("Unauthorized");
+    const userId = claimsData.claims.sub as string;
 
     const db = createClient(supabaseUrl, serviceKey);
     const { action } = await req.json();
