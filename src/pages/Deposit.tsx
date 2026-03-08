@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowDownCircle, Check, Copy, Loader2, Shield, Wallet } from "lucide-react";
+import { ArrowDownCircle, Check, Copy, Loader2, QrCode, Shield, Wallet } from "lucide-react";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -25,6 +25,14 @@ const fmtInput = (v: string): string => {
 
 type Tab = "vip" | "saldo";
 
+interface PixPayment {
+  qr_code: string;
+  qr_code_base64: string;
+  ticket_url: string;
+  deposit_id: string;
+  expires_at?: string;
+}
+
 const Deposit = () => {
   const { user, profile, refreshProfile } = useAuth();
   const [tab, setTab] = useState<Tab>("vip");
@@ -35,8 +43,8 @@ const Deposit = () => {
   const [wallets, setWallets] = useState({ recharge: 0, personal: 0, income: 0 });
   const [deposits, setDeposits] = useState<any[]>([]);
 
-  const [pixKey, setPixKey] = useState<{ key: string; type: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [pixPayment, setPixPayment] = useState<PixPayment | null>(null);
 
   const [rawDeposit, setRawDeposit] = useState("");
   const [minDeposit, setMinDeposit] = useState(50);
@@ -62,7 +70,7 @@ const Deposit = () => {
         supabase
           .from("platform_settings")
           .select("key,value")
-          .in("key", ["platform_pix_key", "min_deposit"]),
+          .in("key", ["min_deposit"]),
       ]);
 
       setVipLevels((levelsRes.data as any[]) ?? []);
@@ -80,7 +88,6 @@ const Deposit = () => {
 
       const cfg: Record<string, any> = {};
       (confRes.data ?? []).forEach((c: any) => (cfg[c.key] = c.value));
-      if (cfg.platform_pix_key) setPixKey(cfg.platform_pix_key);
       if (cfg.min_deposit?.amount) setMinDeposit(Number(cfg.min_deposit.amount));
 
       setLoading(false);
@@ -91,90 +98,73 @@ const Deposit = () => {
 
   const amount = parseCurrency(rawDeposit);
 
+  const generatePix = async (pixAmount: number, description: string, depositType: string, vipLevelCode?: string) => {
+    setSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sessão expirada");
+
+      const res = await supabase.functions.invoke("mercadopago-pix", {
+        body: {
+          amount: pixAmount,
+          description,
+          deposit_type: depositType,
+          vip_level_code: vipLevelCode,
+        },
+      });
+
+      if (res.error) throw new Error(res.error.message || "Erro ao gerar PIX");
+
+      const data = res.data;
+      if (!data?.ok) throw new Error(data?.error || "Erro ao gerar cobrança");
+
+      setPixPayment({
+        qr_code: data.qr_code,
+        qr_code_base64: data.qr_code_base64,
+        ticket_url: data.ticket_url,
+        deposit_id: data.deposit_id,
+        expires_at: data.expires_at,
+      });
+
+      toast.success("PIX gerado! Escaneie o QR Code ou copie o código.");
+
+      // Reload deposits
+      if (user) {
+        const { data: deps } = await supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+        setDeposits(deps ?? []);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar PIX");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleNormalDeposit = async () => {
     if (!user) return;
     if (amount < minDeposit) {
       toast.error(`Depósito mínimo: ${fmtBRL(minDeposit)}`);
       return;
     }
-
-    setSubmitting(true);
-
-    const { error } = await supabase.from("deposits").insert({
-      user_id: user.id,
-      amount,
-      status: "pending",
-    } as any);
-
-    if (error) {
-      toast.error(error.message || "Erro ao solicitar depósito");
-      setSubmitting(false);
-      return;
-    }
-
-    await supabase.from("transactions").insert({
-      user_id: user.id,
-      type: "deposit",
-      amount,
-      description: "Depósito para carteira de recarga",
-      wallet_type: "recharge",
-    } as any);
-
-    toast.success("Depósito solicitado com sucesso.");
+    await generatePix(amount, "Depósito para carteira de recarga", "balance");
     setRawDeposit("");
-    refreshProfile();
-    setSubmitting(false);
   };
 
   const handleVipUpgrade = async () => {
     if (!user || !selectedVip) return;
-
-    const currentDeposit = Number(currentVip?.deposit_required ?? 0);
     const targetDeposit = Number(selectedVip.deposit_required ?? 0);
-
-    setSubmitting(true);
-
-    const { error } = await supabase.from("deposits").insert({
-      user_id: user.id,
-      amount: targetDeposit,
-      status: "pending",
-      admin_notes: `Upgrade VIP para ${selectedVip.display_name}`,
-    } as any);
-
-    if (error) {
-      toast.error(error.message || "Erro ao iniciar upgrade VIP");
-      setSubmitting(false);
-      return;
-    }
-
-    await supabase.from("transactions").insert([
-      {
-        user_id: user.id,
-        type: "vip_upgrade",
-        amount: targetDeposit,
-        description: `Solicitação de upgrade para ${selectedVip.display_name}`,
-      },
-      {
-        user_id: user.id,
-        type: "vip_refund",
-        amount: currentDeposit,
-        description: `Previsão de devolução do depósito anterior em até 36h`,
-      },
-    ] as any);
-
-    toast.success(`Upgrade para ${selectedVip.display_name} iniciado. Pague o PIX para concluir.`);
+    await generatePix(
+      targetDeposit,
+      `Upgrade VIP para ${selectedVip.display_name}`,
+      "vip_upgrade",
+      selectedVip.level_code,
+    );
     setSelectedVip(null);
-    setSubmitting(false);
   };
 
-  const canVip3 = useMemo(() => {
-    // requisito depende de diretos ativos - simplificado aqui para não bloquear fluxo
-    return true;
-  }, []);
-
-  const copyPix = async () => {
-    if (!pixKey?.key) return;
-    await navigator.clipboard.writeText(pixKey.key);
+  const copyPixCode = async () => {
+    if (!pixPayment?.qr_code) return;
+    await navigator.clipboard.writeText(pixPayment.qr_code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -191,13 +181,59 @@ const Deposit = () => {
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
       <div className="glass-card rounded-xl p-3 grid grid-cols-2 gap-2">
-        <Button variant={tab === "vip" ? "default" : "outline"} className={tab === "vip" ? "gradient-primary text-primary-foreground" : ""} onClick={() => setTab("vip")}>
+        <Button variant={tab === "vip" ? "default" : "outline"} className={tab === "vip" ? "gradient-primary text-primary-foreground" : ""} onClick={() => { setTab("vip"); setPixPayment(null); }}>
           Ativar/Upgrade VIP
         </Button>
-        <Button variant={tab === "saldo" ? "default" : "outline"} className={tab === "saldo" ? "gradient-primary text-primary-foreground" : ""} onClick={() => setTab("saldo")}>
+        <Button variant={tab === "saldo" ? "default" : "outline"} className={tab === "saldo" ? "gradient-primary text-primary-foreground" : ""} onClick={() => { setTab("saldo"); setPixPayment(null); }}>
           Depositar Saldo
         </Button>
       </div>
+
+      {/* PIX Payment QR Code */}
+      {pixPayment && (
+        <Card className="p-5 space-y-4 border-primary/30 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <QrCode className="h-5 w-5 text-primary" />
+            <h2 className="font-heading text-lg font-bold">Pagamento PIX Gerado</h2>
+          </div>
+
+          {pixPayment.qr_code_base64 && (
+            <div className="flex justify-center">
+              <img
+                src={`data:image/png;base64,${pixPayment.qr_code_base64}`}
+                alt="QR Code PIX"
+                className="w-56 h-56 rounded-lg border border-border"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Código PIX (Copia e Cola):</p>
+            <div className="bg-secondary rounded-lg p-3 break-all font-mono text-xs max-h-24 overflow-y-auto">
+              {pixPayment.qr_code}
+            </div>
+            <Button variant="outline" size="sm" className="w-full" onClick={copyPixCode}>
+              {copied ? <><Check className="h-4 w-4 mr-1" /> Copiado!</> : <><Copy className="h-4 w-4 mr-1" /> Copiar código PIX</>}
+            </Button>
+          </div>
+
+          {pixPayment.ticket_url && (
+            <a href={pixPayment.ticket_url} target="_blank" rel="noopener noreferrer" className="block">
+              <Button variant="outline" size="sm" className="w-full">
+                Abrir página de pagamento
+              </Button>
+            </a>
+          )}
+
+          <p className="text-xs text-muted-foreground text-center">
+            ✅ O pagamento será confirmado automaticamente após a transferência PIX.
+          </p>
+
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => setPixPayment(null)}>
+            Fechar
+          </Button>
+        </Card>
+      )}
 
       {tab === "vip" ? (
         <Card className="p-5 space-y-4">
@@ -213,8 +249,7 @@ const Deposit = () => {
               const levelNum = v.level_code === "intern" ? 0 : Number(String(v.level_code).replace("vip", ""));
               const locked = !v.is_available;
               const belowOrEqualCurrent = levelNum <= vipLevel;
-              const vip3Blocked = v.level_code === "vip3" && !canVip3;
-              const disabled = locked || belowOrEqualCurrent || vip3Blocked;
+              const disabled = locked || belowOrEqualCurrent;
               return (
                 <div key={v.level_code} className="rounded-xl border border-border p-4 space-y-2">
                   <div className="flex justify-between items-center">
@@ -236,25 +271,14 @@ const Deposit = () => {
             <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 space-y-3">
               <p className="text-sm font-medium">Confirmação de upgrade</p>
               <p className="text-xs text-muted-foreground">
-                Para ativar <b>{selectedVip.display_name}</b>, faça depósito de <b>{fmtBRL(Number(selectedVip.deposit_required || 0))}</b>.
-                Seu depósito anterior de <b>{fmtBRL(Number(currentVip?.deposit_required || 0))}</b> será devolvido para a Carteira de Recarga em até 36 horas.
+                Para ativar <b>{selectedVip.display_name}</b>, será gerado um PIX de <b>{fmtBRL(Number(selectedVip.deposit_required || 0))}</b>.
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setSelectedVip(null)}>Cancelar</Button>
                 <Button className="gradient-primary text-primary-foreground" onClick={handleVipUpgrade} disabled={submitting}>
-                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processando...</> : "Confirmar e gerar PIX"}
+                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando PIX...</> : "Confirmar e gerar PIX"}
                 </Button>
               </div>
-            </div>
-          )}
-
-          {pixKey && (
-            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
-              <p className="text-xs text-muted-foreground">PIX para pagamento</p>
-              <p className="font-mono text-sm break-all">{pixKey.key}</p>
-              <Button variant="outline" size="sm" onClick={copyPix}>
-                {copied ? <><Check className="h-4 w-4 mr-1" /> Copiado!</> : <><Copy className="h-4 w-4 mr-1" /> Copiar chave</>}
-              </Button>
             </div>
           )}
         </Card>
@@ -292,21 +316,8 @@ const Deposit = () => {
           </div>
 
           <Button className="w-full gradient-primary text-primary-foreground" disabled={submitting || amount < minDeposit} onClick={handleNormalDeposit}>
-            {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processando...</> : "Gerar PIX para depósito"}
+            {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando PIX...</> : "Gerar PIX para depósito"}
           </Button>
-
-          {pixKey && (
-            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
-              <p className="text-xs text-muted-foreground">Chave PIX ({pixKey.type})</p>
-              <p className="font-mono text-sm break-all">{pixKey.key}</p>
-              <Button variant="outline" size="sm" onClick={copyPix}>
-                {copied ? <><Check className="h-4 w-4 mr-1" /> Copiado!</> : <><Copy className="h-4 w-4 mr-1" /> Copiar chave</>}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                ⚠️ Em alguns casos, o banco pode exibir um alerta de segurança durante a transferência. Isso faz parte do protocolo normal de verificação das instituições financeiras. Caso apareça o aviso, basta confirmar a transação. A operação é regular e segura.
-              </p>
-            </div>
-          )}
         </Card>
       )}
 
@@ -322,7 +333,13 @@ const Deposit = () => {
                   <p className="font-mono font-bold">{fmtBRL(Number(d.amount || 0))}</p>
                   <p className="text-xs text-muted-foreground">{d.created_at ? format(new Date(d.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">{d.status}</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  d.status === "approved" ? "bg-success/20 text-success" :
+                  d.status === "rejected" ? "bg-destructive/20 text-destructive" :
+                  "bg-warning/20 text-warning"
+                }`}>
+                  {d.status === "approved" ? "Aprovado" : d.status === "rejected" ? "Rejeitado" : "Pendente"}
+                </span>
               </div>
             ))}
           </div>

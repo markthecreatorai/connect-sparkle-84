@@ -201,7 +201,12 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           created_at: string | null
+          deposit_type: string | null
           id: string
+          mp_payment_id: string | null
+          mp_qr_code: string | null
+          mp_qr_code_base64: string | null
+          mp_ticket_url: string | null
           proof_url: string | null
           status: string
           user_id: string
@@ -212,7 +217,12 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string | null
+          deposit_type?: string | null
           id?: string
+          mp_payment_id?: string | null
+          mp_qr_code?: string | null
+          mp_qr_code_base64?: string | null
+          mp_ticket_url?: string | null
           proof_url?: string | null
           status?: string
           user_id: string
@@ -223,7 +233,12 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string | null
+          deposit_type?: string | null
           id?: string
+          mp_payment_id?: string | null
+          mp_qr_code?: string | null
+          mp_qr_code_base64?: string | null
+          mp_ticket_url?: string | null
           proof_url?: string | null
           status?: string
           user_id?: string
