@@ -282,7 +282,7 @@ const Dashboard = () => {
   // ─── render ─────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 p-4 lg:p-6 max-w-5xl mx-auto w-full min-w-0 overflow-x-hidden">
       {/* HEADER */}
       <div className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shrink-0">
