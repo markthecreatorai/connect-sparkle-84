@@ -120,6 +120,41 @@ export type Database = {
           },
         ]
       }
+      daily_checkins: {
+        Row: {
+          checkin_date: string
+          created_at: string | null
+          id: string
+          reward_amount: number
+          streak_count: number
+          user_id: string
+        }
+        Insert: {
+          checkin_date?: string
+          created_at?: string | null
+          id?: string
+          reward_amount?: number
+          streak_count?: number
+          user_id: string
+        }
+        Update: {
+          checkin_date?: string
+          created_at?: string | null
+          id?: string
+          reward_amount?: number
+          streak_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_tasks: {
         Row: {
           created_at: string | null
@@ -414,6 +449,38 @@ export type Database = {
           vip_level?: string
         }
         Relationships: []
+      }
+      spin_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          prize_amount: number
+          spin_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          prize_amount?: number
+          spin_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          prize_amount?: number
+          spin_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_positions: {
         Row: {
