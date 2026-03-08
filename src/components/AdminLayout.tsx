@@ -47,8 +47,8 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
   const SidebarContent = ({ onNav }: { onNav?: () => void }) => (
     <>
       <div className="flex items-center gap-2 px-5 py-6">
-        <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-          <span className="font-heading text-sm font-bold text-primary-foreground">A</span>
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+          <span className="font-heading text-sm text-primary-foreground">A</span>
         </div>
         <span className="font-heading text-lg font-bold text-foreground">Admin</span>
       </div>
