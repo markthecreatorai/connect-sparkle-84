@@ -11,6 +11,7 @@ import {
   Link2,
   History,
   CheckSquare,
+  TrendingUp,
   Settings,
   FileText,
   LogOut,
