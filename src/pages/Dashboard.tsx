@@ -231,6 +231,57 @@ const Dashboard = () => {
     }
   };
 
+  const handleCheckin = async () => {
+    setCheckinLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gamification", {
+        body: { action: "checkin" },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Erro");
+      setCheckinDone(true);
+      setCheckinStreak(data.streak ?? checkinStreak + 1);
+      toast.success(`Check-in feito! +R$0,50 · Streak: ${data.streak} dia(s) 🔥`);
+      // Refresh wallets
+      const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user!.id);
+      const wMap = { recharge: 0, personal: 0, income: 0 };
+      (wRes ?? []).forEach((w: any) => { if (w.wallet_type in wMap) (wMap as any)[w.wallet_type] = Number(w.balance ?? 0); });
+      setWallets(wMap);
+    } catch (e: any) {
+      toast.error(e.message || "Erro no check-in");
+    }
+    setCheckinLoading(false);
+  };
+
+  const handleSpin = async () => {
+    setSpinLoading(true);
+    setSpinResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("gamification", {
+        body: { action: "spin" },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Erro");
+      // Simulate spin delay
+      await new Promise((r) => setTimeout(r, 2000));
+      setSpinResult(data.prize);
+      setSpinDone(true);
+      if (data.prize > 0) {
+        toast.success(`🎉 Parabéns! Você ganhou R$${Number(data.prize).toFixed(2)}!`);
+        // Refresh wallets
+        const { data: wRes } = await supabase.from("wallets").select("wallet_type,balance").eq("user_id", user!.id);
+        const wMap = { recharge: 0, personal: 0, income: 0 };
+        (wRes ?? []).forEach((w: any) => { if (w.wallet_type in wMap) (wMap as any)[w.wallet_type] = Number(w.balance ?? 0); });
+        setWallets(wMap);
+      } else {
+        toast("Tente novamente amanhã! 🛡️");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erro na roleta");
+    }
+    setSpinLoading(false);
+  };
+
   // ─── render ─────────────────────────────────────────────────
 
   return (
