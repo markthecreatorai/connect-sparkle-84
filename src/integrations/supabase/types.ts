@@ -720,6 +720,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_daily_task: {
+        Args: { _task_id: string; _task_number: number; _user_id: string }
+        Returns: Json
+      }
       distribute_deposit_commissions: {
         Args: { p_deposit_amount: number; p_user_id: string }
         Returns: undefined
