@@ -451,7 +451,7 @@ const Dashboard = () => {
       {showVipLevels && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-background/60 backdrop-blur-sm" onClick={() => setShowVipLevels(false)} />
-          <div className="glass-card relative z-10 w-full max-w-4xl rounded-2xl p-4 md:p-6 space-y-4 max-h-[85vh] overflow-auto">
+          <div className="glass-card relative z-10 w-full max-w-4xl rounded-2xl p-4 md:p-6 space-y-4 max-h-[85vh] overflow-auto styled-scrollbar">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-lg font-bold">Todos os níveis VIP</h2>
               <button onClick={() => setShowVipLevels(false)} className="text-muted-foreground hover:text-foreground">

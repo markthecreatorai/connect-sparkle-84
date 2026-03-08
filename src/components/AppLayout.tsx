@@ -74,7 +74,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           <span className="font-heading text-lg font-bold text-foreground">Plataforma</span>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-3 overflow-y-auto styled-scrollbar">
           <p className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Menu</p>
           {userNavItems.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkClasses(item.to)}>
@@ -135,7 +135,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <div className="p-4 border-b border-border">
               <span className="font-heading text-lg font-bold">Menu</span>
             </div>
-            <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
+            <nav className="flex-1 space-y-1 p-3 overflow-y-auto styled-scrollbar">
               {[...userNavItems, ...sidebarExtraItems].map((item) => (
                 <NavLink
                   key={item.to}
