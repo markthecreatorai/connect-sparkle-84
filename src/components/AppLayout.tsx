@@ -12,6 +12,7 @@ import {
   History,
   CheckSquare,
   TrendingUp,
+  BookOpen,
   Settings,
   FileText,
   LogOut,
