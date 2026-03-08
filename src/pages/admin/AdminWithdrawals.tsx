@@ -48,13 +48,16 @@ const AdminWithdrawals = () => {
   const handleApprove = async () => {
     if (!approveModal) return;
     setActionLoading(true);
-    const { data, error } = await supabase.functions.invoke("admin-actions", {
-      body: { action: "approve_withdrawal", withdrawal_id: approveModal.id },
+
+    // Call Asaas payout to send PIX automatically
+    const { data, error } = await supabase.functions.invoke("asaas-payout", {
+      body: { withdrawal_id: approveModal.id },
     });
+
     if (error || !data?.ok) {
-      toast.error(data?.error || error?.message || "Erro ao aprovar");
+      toast.error(data?.error || error?.message || "Erro ao processar pagamento PIX");
     } else {
-      toast.success("Saque aprovado e finalizado.");
+      toast.success(`Saque aprovado! PIX enviado automaticamente via Asaas. (Transfer: ${data.asaas_transfer_id})`);
       fetchWithdrawals();
     }
     setApproveModal(null);
@@ -190,10 +193,10 @@ const AdminWithdrawals = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => !actionLoading && setApproveModal(null)} />
           <div className="glass-card relative z-10 w-full max-w-md rounded-2xl p-6 space-y-4">
-            <h2 className="font-heading text-lg font-bold">Confirmar Aprovação de Saque</h2>
+            <h2 className="font-heading text-lg font-bold">Aprovar Saque e Enviar PIX</h2>
             <p className="text-sm text-muted-foreground">
-              Confirmar que você já realizou o pagamento de <span className="text-foreground font-bold">{fmtBRL(approveModal.net_amount)}</span> para a chave PIX{" "}
-              <span className="text-foreground font-medium">{approveModal.pix_key}</span> ({approveModal.pix_key_type})?
+              Ao confirmar, o pagamento de <span className="text-foreground font-bold">{fmtBRL(approveModal.net_amount)}</span> será enviado automaticamente via PIX para a chave{" "}
+              <span className="text-foreground font-medium">{approveModal.pix_key}</span> ({approveModal.pix_key_type}).
             </p>
             <div className="flex gap-2 pt-2">
               <Button onClick={() => setApproveModal(null)} variant="outline" className="flex-1" disabled={actionLoading}>Cancelar</Button>
