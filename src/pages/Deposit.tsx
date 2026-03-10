@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowDownCircle, Check, Copy, Loader2, QrCode, Shield, Wallet } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -320,20 +321,22 @@ const Deposit = () => {
             })}
           </div>
 
-          {selectedVip && (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 space-y-3">
-              <p className="text-sm font-medium">Confirmação de upgrade</p>
-              <p className="text-xs text-muted-foreground">
-                Para ativar <b>{selectedVip.display_name}</b>, será gerado um PIX de <b>{fmtBRL(Number(selectedVip.deposit_required || 0))}</b>.
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setSelectedVip(null)}>Cancelar</Button>
-                <Button className="gradient-primary text-primary-foreground" onClick={handleVipUpgrade} disabled={submitting}>
-                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando PIX...</> : "Confirmar e gerar PIX"}
+          <Dialog open={!!selectedVip} onOpenChange={(open) => { if (!open) setSelectedVip(null); }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Confirmação de Upgrade</DialogTitle>
+                <DialogDescription>
+                  Para ativar <b>{selectedVip?.display_name}</b>, será gerado um PIX de <b>{fmtBRL(Number(selectedVip?.deposit_required || 0))}</b>.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex-row gap-2">
+                <Button variant="outline" onClick={() => setSelectedVip(null)} className="flex-1">Cancelar</Button>
+                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleVipUpgrade} disabled={submitting}>
+                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando...</> : "Confirmar"}
                 </Button>
-              </div>
-            </div>
-          )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </Card>
       ) : (
         <Card className="p-5 space-y-4">
