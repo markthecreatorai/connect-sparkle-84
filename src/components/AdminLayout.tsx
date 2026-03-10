@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  BarChart3,
 } from "lucide-react";
 
 const adminNav = [
@@ -23,7 +24,7 @@ const adminNav = [
   { to: "/admin/withdrawals", icon: ArrowUpCircle, label: "Saques" },
   { to: "/admin/settings", icon: Settings, label: "Configurações" },
   { to: "/admin/vip-levels", icon: Crown, label: "Níveis VIP" },
-  { to: "/admin/reports", icon: FileText, label: "Relatórios" },
+  { to: "/admin/reports", icon: BarChart3, label: "Relatórios" },
   { to: "/admin/logs", icon: FileText, label: "Logs" },
 ];
 
@@ -40,19 +41,26 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
     cn(
       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
       isActive(path)
-        ? "bg-primary text-primary-foreground shadow-sm"
-        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
     );
 
   const SidebarContent = ({ onNav }: { onNav?: () => void }) => (
     <>
-      <div className="flex items-center gap-2 px-5 py-6">
-        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-          <span className="font-heading text-sm text-primary-foreground">A</span>
+      <div className="flex items-center gap-3 px-5 py-6">
+        <div className="h-10 w-10 rounded-xl gradient-accent flex items-center justify-center shadow-sm">
+          <span className="font-heading text-base text-white">A</span>
         </div>
-        <span className="font-heading text-lg font-bold text-foreground">Admin</span>
+        <div>
+          <span className="font-heading text-lg text-white tracking-wide">ADMIN</span>
+          <p className="text-[10px] text-sidebar-muted uppercase tracking-wider">Painel de Controle</p>
+        </div>
       </div>
-      <nav className="flex-1 space-y-1 px-3 overflow-y-auto">
+
+      <nav className="flex-1 space-y-0.5 px-3 overflow-y-auto styled-scrollbar">
+        <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-muted">
+          Gestão
+        </p>
         {adminNav.map((item) => (
           <NavLink
             key={item.to}
@@ -65,19 +73,20 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
             <span>{item.label}</span>
           </NavLink>
         ))}
-        <div className="my-3 border-t border-border" />
+        <div className="my-3 border-t border-sidebar-border" />
         <button
           onClick={() => { navigate("/dashboard"); onNav?.(); }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Voltar ao App</span>
         </button>
       </nav>
-      <div className="border-t border-border p-3">
+
+      <div className="border-t border-sidebar-border p-3">
         <button
           onClick={() => { signOut(); onNav?.(); }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/60 hover:bg-red-500/10 hover:text-red-400 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           <span>Sair</span>
@@ -89,19 +98,19 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="flex min-h-screen w-full">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
+      <aside className="hidden lg:flex w-[260px] flex-col gradient-navy fixed inset-y-0 left-0 z-30 border-r border-sidebar-border">
         <SidebarContent />
       </aside>
 
       {/* Mobile header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-4">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg gradient-primary flex items-center justify-center">
-            <span className="font-heading text-xs font-bold text-primary-foreground">A</span>
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between gradient-navy px-4 shadow-md">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg gradient-accent flex items-center justify-center">
+            <span className="font-heading text-xs text-white">A</span>
           </div>
-          <span className="font-heading text-base font-bold">Admin</span>
+          <span className="font-heading text-sm text-white tracking-wide">ADMIN</span>
         </div>
-        <button onClick={() => setOpen(!open)} className="text-foreground">
+        <button onClick={() => setOpen(!open)} className="text-white/80 p-1.5 rounded-lg hover:bg-white/10">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </header>
@@ -109,16 +118,16 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
       {/* Mobile drawer */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="relative z-50 w-64 bg-background border-r border-border flex flex-col h-full shadow-xl">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <aside className="relative z-50 w-72 gradient-navy flex flex-col h-full shadow-2xl">
             <SidebarContent onNav={() => setOpen(false)} />
           </aside>
         </div>
       )}
 
       {/* Content */}
-      <main className="flex-1 lg:ml-60 min-w-0 overflow-x-hidden">
-        <div className="pt-14 lg:pt-0 min-h-screen w-full min-w-0">{children}</div>
+      <main className="flex-1 lg:ml-[260px] min-w-0 overflow-x-hidden">
+        <div className="pt-14 lg:pt-0 min-h-screen bg-background w-full min-w-0">{children}</div>
       </main>
     </div>
   );

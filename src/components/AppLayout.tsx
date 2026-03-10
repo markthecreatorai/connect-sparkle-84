@@ -13,8 +13,7 @@ import {
   CheckSquare,
   TrendingUp,
   BookOpen,
-  Settings,
-  FileText,
+  Crown,
   LogOut,
   Menu,
   X,
@@ -33,6 +32,7 @@ const userNavItems = [
 
 const sidebarExtraItems = [
   { to: "/tasks", icon: CheckSquare, label: "Tarefas" },
+  { to: "/vip", icon: Crown, label: "Planos VIP" },
   { to: "/spin", icon: Shield, label: "Girar Escudo" },
   { to: "/investments", icon: TrendingUp, label: "Investimentos" },
   { to: "/transactions", icon: History, label: "Transações" },
@@ -42,11 +42,6 @@ const sidebarExtraItems = [
 
 const adminItems = [
   { to: "/admin", icon: Shield, label: "Admin" },
-  { to: "/admin/users", icon: Users, label: "Usuários" },
-  { to: "/admin/deposits", icon: ArrowDownToLine, label: "Depósitos" },
-  { to: "/admin/withdrawals", icon: ArrowUpFromLine, label: "Saques" },
-  { to: "/admin/settings", icon: Settings, label: "Config" },
-  { to: "/admin/logs", icon: FileText, label: "Logs" },
 ];
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
@@ -61,29 +56,40 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     cn(
       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
       isActive(path)
-        ? "bg-primary text-primary-foreground shadow-sm"
-        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
     );
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
-        <div className="flex items-center gap-2.5 px-5 py-6">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <img src={avengersLogo} alt="AvengersPay" className="h-7 w-7 invert" />
+      {/* Desktop Sidebar — Dark Navy */}
+      <aside className="hidden lg:flex w-[260px] flex-col gradient-navy fixed inset-y-0 left-0 z-30 border-r border-sidebar-border">
+        {/* Brand */}
+        <div className="flex items-center gap-3 px-5 py-6">
+          <div className="h-10 w-10 rounded-xl bg-sidebar-primary/20 border border-sidebar-primary/30 flex items-center justify-center">
+            <img src={avengersLogo} alt="AvengersPay" className="h-7 w-7 brightness-0 invert" />
           </div>
-          <span className="font-heading text-lg text-foreground">AvengersPay</span>
+          <div>
+            <span className="font-heading text-lg text-white tracking-wide">AVENGERS</span>
+            <span className="font-heading text-lg text-sidebar-primary tracking-wide">PAY</span>
+          </div>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 overflow-y-auto styled-scrollbar">
-          <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Menu</p>
+        <nav className="flex-1 space-y-0.5 px-3 overflow-y-auto styled-scrollbar">
+          <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-muted">
+            Menu Principal
+          </p>
           {userNavItems.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkClasses(item.to)}>
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
             </NavLink>
           ))}
+
+          <div className="my-3 border-t border-sidebar-border" />
+          <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-muted">
+            Recursos
+          </p>
           {sidebarExtraItems.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkClasses(item.to)}>
               <item.icon className="h-4 w-4" />
@@ -93,8 +99,10 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
           {isAdmin && (
             <>
-              <div className="my-3 border-t border-border" />
-              <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
+              <div className="my-3 border-t border-sidebar-border" />
+              <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-muted">
+                Administração
+              </p>
               {adminItems.map((item) => (
                 <NavLink key={item.to} to={item.to} className={linkClasses(item.to)}>
                   <item.icon className="h-4 w-4" />
@@ -105,26 +113,29 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           )}
         </nav>
 
-        <div className="border-t border-border p-3">
+        <div className="border-t border-sidebar-border p-3">
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:bg-red-500/10 hover:text-red-400"
           >
             <LogOut className="h-4 w-4" />
-            <span>Sair</span>
+            <span>Sair da Conta</span>
           </button>
         </div>
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background px-4 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-            <img src={avengersLogo} alt="AvengersPay" className="h-6 w-6 invert" />
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between gradient-navy px-4 shadow-md">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-sidebar-primary/20 border border-sidebar-primary/30 flex items-center justify-center">
+            <img src={avengersLogo} alt="AvengersPay" className="h-5 w-5 brightness-0 invert" />
           </div>
-          <span className="font-heading text-base text-foreground">AvengersPay</span>
+          <div>
+            <span className="font-heading text-sm text-white tracking-wide">AVENGERS</span>
+            <span className="font-heading text-sm text-sidebar-primary tracking-wide">PAY</span>
+          </div>
         </div>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-foreground p-1 rounded-lg hover:bg-secondary">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/80 p-1.5 rounded-lg hover:bg-white/10 transition-colors">
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </header>
@@ -132,12 +143,17 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       {/* Mobile Slide Menu */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex justify-end">
-          <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative z-50 w-64 bg-background border-l border-border flex flex-col h-full shadow-xl">
-            <div className="p-4 border-b border-border">
-              <span className="font-heading text-lg text-foreground">Menu</span>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative z-50 w-72 gradient-navy flex flex-col h-full shadow-2xl">
+            <div className="p-5 border-b border-sidebar-border">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-sidebar-primary/20 border border-sidebar-primary/30 flex items-center justify-center">
+                  <img src={avengersLogo} alt="AvengersPay" className="h-5 w-5 brightness-0 invert" />
+                </div>
+                <span className="font-heading text-base text-white tracking-wide">Menu</span>
+              </div>
             </div>
-            <nav className="flex-1 space-y-1 p-3 overflow-y-auto styled-scrollbar">
+            <nav className="flex-1 space-y-0.5 p-3 overflow-y-auto styled-scrollbar">
               {[...userNavItems, ...sidebarExtraItems].map((item) => (
                 <NavLink
                   key={item.to}
@@ -151,8 +167,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
               ))}
               {isAdmin && (
                 <>
-                  <div className="my-3 border-t border-border" />
-                  <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
+                  <div className="my-3 border-t border-sidebar-border" />
+                  <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-muted">Admin</p>
                   {adminItems.map((item) => (
                     <NavLink
                       key={item.to}
@@ -167,13 +183,13 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
                 </>
               )}
             </nav>
-            <div className="border-t border-border p-3">
+            <div className="border-t border-sidebar-border p-3">
               <button
                 onClick={() => { signOut(); setSidebarOpen(false); }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/60 hover:bg-red-500/10 hover:text-red-400"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Sair</span>
+                <span>Sair da Conta</span>
               </button>
             </div>
           </aside>
@@ -181,21 +197,21 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-60 min-w-0 overflow-x-hidden">
-        <div className="pt-14 pb-20 lg:pt-0 lg:pb-0 min-h-screen bg-secondary/30 w-full min-w-0">
+      <main className="flex-1 lg:ml-[260px] min-w-0 overflow-x-hidden">
+        <div className="pt-14 pb-20 lg:pt-0 lg:pb-0 min-h-screen bg-background w-full min-w-0">
           {children}
         </div>
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-border bg-background shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around gradient-navy shadow-[0_-2px_10px_rgba(0,0,0,0.15)]">
         {userNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={cn(
-              "flex flex-col items-center gap-0.5 text-[10px] font-medium transition-colors duration-200",
-              isActive(item.to) ? "text-primary" : "text-muted-foreground"
+              "flex flex-col items-center gap-0.5 text-[10px] font-medium transition-colors duration-200 py-1",
+              isActive(item.to) ? "text-sidebar-primary" : "text-white/50"
             )}
           >
             <item.icon className={cn("h-5 w-5", isActive(item.to) && "drop-shadow-sm")} />
