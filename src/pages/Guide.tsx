@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Crown, CheckSquare, Users, Briefcase, ArrowUpFromLine, TrendingUp, BookOpen } from "lucide-react";
+import { Wallet, Crown, CheckSquare, Users, Briefcase, ArrowUpFromLine, TrendingUp, BookOpen, Shield, Star, Zap } from "lucide-react";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -14,6 +14,7 @@ interface VipLevel {
   reward_per_task: number;
   daily_income: number;
   monthly_income: number;
+  yearly_income: number;
   is_available: boolean;
   sort_order: number;
 }
@@ -51,6 +52,8 @@ const Guide = () => {
   const wdAmounts = Array.isArray(config.withdrawal_amounts) ? config.withdrawal_amounts : [50, 150, 300, 500, 1000, 2000, 4000, 7000];
   const investPlans = config.investment_plans ?? { "7": 1.5, "10": 3, "15": 5, "30": 12 };
 
+  const paidVipLevels = vipLevels.filter((v) => v.deposit_required > 0);
+
   if (loading) {
     return (
       <div className="p-4 lg:p-6 max-w-3xl mx-auto space-y-3">
@@ -68,7 +71,42 @@ const Guide = () => {
       </div>
 
       <Accordion type="multiple" className="space-y-2">
-        {/* SEÇÃO 1 — Saldos */}
+        {/* ABOUT */}
+        <AccordionItem value="about" className="glass-card rounded-xl border-none px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="font-semibold">Sobre a AvengersPay</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="text-sm text-muted-foreground space-y-3 pb-4">
+            <p className="font-semibold text-foreground">Onde heróis comuns se tornam os verdadeiros Vingadores do Marketing Marvel</p>
+            <p>A <b>AvengersPay</b> é uma empresa de marketing e publicidade 100% temática Marvel, especializada em inteligência coletiva de fãs.</p>
+            <p>Criamos uma plataforma gamificada onde entusiastas do MCU e quadrinhos realizam tarefas online simples e divertidas:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Avaliação de artes visuais conceituais</li>
+              <li>Análise detalhada de trailers</li>
+              <li>Críticas estruturadas de filmes e séries</li>
+              <li>Feedback sobre fotografia, direção de arte, efeitos visuais e trilha sonora</li>
+            </ul>
+            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
+              <p className="font-semibold text-foreground flex items-center gap-1"><Star className="h-3.5 w-3.5 text-warning" /> Nossa Missão</p>
+              <p>Usamos o poder das avaliações reais dos fãs para entregar feedback estratégico diretamente para os estúdios Marvel — decisões de produção, design de personagens, cinematografia e engajamento global.</p>
+            </div>
+            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
+              <p className="font-semibold text-foreground flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-warning" /> Renda Extra com Poder Ilimitado</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Pagamento por tarefa (missões rápidas)</li>
+                <li>Bônus por performance e streaks diários</li>
+                <li>Sistema de rede Avengers — monte sua equipe de heróis</li>
+                <li>Comissões recorrentes sobre o desempenho da sua rede</li>
+                <li>Prêmios de gestão exclusivos</li>
+              </ul>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* WALLETS */}
         <AccordionItem value="wallets" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
@@ -84,23 +122,27 @@ const Guide = () => {
                 <p>Recebe seus depósitos via PIX. Usada para ativar planos VIP e investimentos. <b>Sem imposto ao sacar.</b></p>
               </div>
               <div className="rounded-lg bg-secondary/50 p-3">
-                <p className="font-semibold text-warning">👤 Carteira Pessoal</p>
-                <p>Recebe recompensas de tarefas, bônus de check-in, prêmios da roleta e comissões de Nível A (diretas). Taxa de {taxRate}% ao sacar.</p>
+                <p className="font-semibold text-warning">👤 Saldo Pessoal</p>
+                <p>Representa o valor acumulado exclusivamente pelas suas atividades na plataforma: recompensas de tarefas, bônus de check-in, prêmios da roleta e comissões de Nível A (diretas). Taxa de {taxRate}% ao sacar.</p>
               </div>
               <div className="rounded-lg bg-secondary/50 p-3">
-                <p className="font-semibold text-success">👥 Carteira de Renda</p>
-                <p>Recebe comissões de Nível B e C (equipe indireta). Taxa de {taxRate}% ao sacar.</p>
+                <p className="font-semibold text-success">👥 Saldo de Renda</p>
+                <p>Refere-se ao montante proveniente da ativação de novos membros na sua rede: comissões de Nível B e C (equipe indireta), bônus de indicação e bonificações associadas ao crescimento da sua estrutura. Taxa de {taxRate}% ao sacar.</p>
               </div>
+            </div>
+            <div className="rounded-lg border border-border/50 p-3 text-xs">
+              <p className="font-semibold text-foreground mb-1">⚠️ Importante</p>
+              <p>Essa separação permite maior controle e transparência, distinguindo claramente o que foi conquistado de forma individual (Saldo Pessoal) do que foi obtido via rede e indicações (Saldo de Renda). <b>Não é possível misturar os saldos no mesmo pedido de saque.</b></p>
             </div>
           </AccordionContent>
         </AccordionItem>
 
-        {/* SEÇÃO 2 — Níveis VIP */}
+        {/* VIP LEVELS */}
         <AccordionItem value="vip" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-warning" />
-              <span className="font-semibold">Níveis VIP</span>
+              <span className="font-semibold">Níveis VIP — Tarefas e Rendimentos</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-3 pb-4">
@@ -113,7 +155,9 @@ const Guide = () => {
                     <th className="py-1.5 pr-2">Depósito</th>
                     <th className="py-1.5 pr-2">Tarefas</th>
                     <th className="py-1.5 pr-2">R$/Tarefa</th>
-                    <th className="py-1.5">Renda/Dia</th>
+                    <th className="py-1.5 pr-2">Renda/Dia</th>
+                    <th className="py-1.5 pr-2">30 Dias</th>
+                    <th className="py-1.5">360 Dias</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -123,17 +167,19 @@ const Guide = () => {
                       <td className="py-1.5 pr-2">{fmtBRL(v.deposit_required)}</td>
                       <td className="py-1.5 pr-2">{v.daily_tasks}</td>
                       <td className="py-1.5 pr-2">{fmtBRL(v.reward_per_task)}</td>
-                      <td className="py-1.5">{fmtBRL(v.daily_income)}</td>
+                      <td className="py-1.5 pr-2">{fmtBRL(v.daily_income)}</td>
+                      <td className="py-1.5 pr-2">{v.monthly_income > 0 ? fmtBRL(v.monthly_income) : "—"}</td>
+                      <td className="py-1.5">{v.yearly_income > 0 ? fmtBRL(v.yearly_income) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p>Ao fazer upgrade, o depósito anterior é devolvido à Carteira de Recarga em até 36 horas.</p>
+            <p className="text-xs">Ao fazer upgrade, o depósito anterior é devolvido à Carteira de Recarga em até 36 horas.</p>
           </AccordionContent>
         </AccordionItem>
 
-        {/* SEÇÃO 3 — Tarefas */}
+        {/* TASKS */}
         <AccordionItem value="tasks" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
@@ -152,34 +198,79 @@ const Guide = () => {
           </AccordionContent>
         </AccordionItem>
 
-        {/* SEÇÃO 4 — Indicação */}
+        {/* REFERRAL */}
         <AccordionItem value="referral" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
-              <span className="font-semibold">Sistema de Indicação</span>
+              <span className="font-semibold">Sistema de Indicação e Comissões</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground space-y-3 pb-4">
+          <AccordionContent className="text-sm text-muted-foreground space-y-4 pb-4">
             <p>Convide amigos e ganhe comissões em <b>3 níveis</b>:</p>
+
+            {/* Deposit/Activation commissions */}
             <div className="space-y-2">
-              <p className="font-semibold">Comissão sobre depósitos/ativação VIP:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Nível A (direto): {depComm.level_a}% → Carteira Pessoal</li>
-                <li>Nível B (indireto): {depComm.level_b}% → Carteira de Renda</li>
-                <li>Nível C (3º nível): {depComm.level_c}% → Carteira de Renda</li>
-              </ul>
-              <p className="font-semibold">Comissão sobre tarefas dos indicados:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Nível A: {taskComm.level_a}%</li>
-                <li>Nível B: {taskComm.level_b}%</li>
-                <li>Nível C: {taskComm.level_c}%</li>
-              </ul>
+              <p className="font-semibold text-foreground">Comissão sobre Depósitos / Ativação VIP ({depComm.level_a}% – {depComm.level_b}% – {depComm.level_c}%)</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-1.5 pr-2">Nível</th>
+                      <th className="py-1.5 pr-2">Valor Recarga</th>
+                      <th className="py-1.5 pr-2">Nível A ({depComm.level_a}%)</th>
+                      <th className="py-1.5 pr-2">Nível B ({depComm.level_b}%)</th>
+                      <th className="py-1.5">Nível C ({depComm.level_c}%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paidVipLevels.map((v) => (
+                      <tr key={v.level_code} className="border-b border-border/30">
+                        <td className="py-1.5 pr-2 font-medium">{v.display_name}</td>
+                        <td className="py-1.5 pr-2">{fmtBRL(v.deposit_required)}</td>
+                        <td className="py-1.5 pr-2">{fmtBRL(v.deposit_required * depComm.level_a / 100)}</td>
+                        <td className="py-1.5 pr-2">{fmtBRL(v.deposit_required * depComm.level_b / 100)}</td>
+                        <td className="py-1.5">{fmtBRL(v.deposit_required * depComm.level_c / 100)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs">Nível A → Carteira Pessoal · Níveis B e C → Carteira de Renda</p>
+            </div>
+
+            {/* Task commissions */}
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">Comissão sobre Tarefas dos Indicados ({taskComm.level_a}% – {taskComm.level_b}% – {taskComm.level_c}%)</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-1.5 pr-2">Nível</th>
+                      <th className="py-1.5 pr-2">Renda/Dia do Indicado</th>
+                      <th className="py-1.5 pr-2">Nível A ({taskComm.level_a}%)</th>
+                      <th className="py-1.5 pr-2">Nível B ({taskComm.level_b}%)</th>
+                      <th className="py-1.5">Nível C ({taskComm.level_c}%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paidVipLevels.map((v) => (
+                      <tr key={v.level_code} className="border-b border-border/30">
+                        <td className="py-1.5 pr-2 font-medium">{v.display_name}</td>
+                        <td className="py-1.5 pr-2">{fmtBRL(v.daily_income)}</td>
+                        <td className="py-1.5 pr-2">{fmtBRL(v.daily_income * taskComm.level_a / 100)}</td>
+                        <td className="py-1.5 pr-2">{fmtBRL(v.daily_income * taskComm.level_b / 100)}</td>
+                        <td className="py-1.5">{fmtBRL(v.daily_income * taskComm.level_c / 100)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
 
-        {/* SEÇÃO 5 — Cargos */}
+        {/* POSITIONS */}
         <AccordionItem value="positions" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
@@ -214,7 +305,7 @@ const Guide = () => {
           </AccordionContent>
         </AccordionItem>
 
-        {/* SEÇÃO 6 — Saques */}
+        {/* WITHDRAW */}
         <AccordionItem value="withdraw" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
@@ -222,19 +313,28 @@ const Guide = () => {
               <span className="font-semibold">Como Sacar</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground space-y-2 pb-4">
+          <AccordionContent className="text-sm text-muted-foreground space-y-3 pb-4">
             <ul className="list-disc pl-5 space-y-1">
               <li>Horário permitido: <b>{wdHours.start} às {wdHours.end}</b></li>
               <li>Valores disponíveis: {wdAmounts.map((a: number) => fmtBRL(a)).join(", ")}</li>
-              <li>Taxa sobre Carteira Pessoal e de Renda: <b>{taxRate}%</b></li>
+              <li>Taxa sobre Saldo Pessoal e de Renda: <b>{taxRate}%</b></li>
               <li>Carteira de Recarga: <b>sem taxa</b></li>
               <li>Cadastre sua chave PIX e senha de pagamento no Perfil antes de sacar</li>
               <li>Saques são processados manualmente e podem levar até 24 horas</li>
             </ul>
+            <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
+              <p className="font-semibold text-foreground">Processo de Saque</p>
+              <ol className="list-decimal pl-5 space-y-1 text-xs">
+                <li>Escolha de qual carteira deseja sacar: <b>Saldo Pessoal</b> ou <b>Saldo de Renda</b>.</li>
+                <li>Não é possível misturar saldos no mesmo pedido.</li>
+                <li>O método de recebimento é <b>PIX — Transferência Instantânea</b>.</li>
+                <li>Sua chave PIX (e-mail, CPF, telefone etc.) deve estar previamente validada no sistema.</li>
+              </ol>
+            </div>
           </AccordionContent>
         </AccordionItem>
 
-        {/* SEÇÃO 7 — Investimentos */}
+        {/* INVESTMENTS */}
         <AccordionItem value="investments" className="glass-card rounded-xl border-none px-4">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-2">
