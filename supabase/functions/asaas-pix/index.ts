@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
   try {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
     if (!ASAAS_API_KEY) throw new Error("ASAAS_API_KEY not configured");
+    console.log("ASAAS_API_KEY prefix:", ASAAS_API_KEY.substring(0, 10), "length:", ASAAS_API_KEY.length);
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization");
