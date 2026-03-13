@@ -20,7 +20,13 @@ const INVESTMENTS_ENABLED = false; // Toggle to true to re-enable
 
 const Investments = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [redeeming, setRedeeming] = useState<string | null>(null);
+  const [wallets, setWallets] = useState<WalletBalances>({ recharge: 0, personal: 0, income: 0 });
+  const [plans, setPlans] = useState<Record<string, number>>({});
+  const [investments, setInvestments] = useState<any[]>([]);
+  const [amount, setAmount] = useState("");
+  const [selectedDays, setSelectedDays] = useState<number | null>(null);
 
   if (!INVESTMENTS_ENABLED) {
     return (
@@ -37,15 +43,6 @@ const Investments = () => {
       </div>
     );
   }
-  const [submitting, setSubmitting] = useState(false);
-  const [redeeming, setRedeeming] = useState<string | null>(null);
-
-  const [wallets, setWallets] = useState<WalletBalances>({ recharge: 0, personal: 0, income: 0 });
-  const [plans, setPlans] = useState<Record<string, number>>({});
-  const [investments, setInvestments] = useState<any[]>([]);
-
-  const [amount, setAmount] = useState("");
-  const [selectedDays, setSelectedDays] = useState<number | null>(null);
 
   const loadData = async () => {
     if (!user) return;
