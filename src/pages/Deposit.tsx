@@ -123,7 +123,7 @@ const Deposit = () => {
           .in("key", ["min_deposit"]),
       ]);
 
-      setVipLevels((levelsRes.data as any[]) ?? []);
+      
 
       const wm = { recharge: 0, personal: 0, income: 0 };
       (walletRes.data ?? []).forEach((w: any) => {
