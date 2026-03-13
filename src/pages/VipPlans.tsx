@@ -6,6 +6,7 @@ import { ArrowLeft, Crown, Star, Users, UserPlus, Network, Lock } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface VipPlan {
   id: string;
