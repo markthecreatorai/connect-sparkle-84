@@ -28,25 +28,8 @@ const Investments = () => {
   const [investments, setInvestments] = useState<any[]>([]);
   const [amount, setAmount] = useState("");
   const [selectedDays, setSelectedDays] = useState<number | null>(null);
-
-  if (!INVESTMENTS_ENABLED) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] p-4">
-        <Card className="p-8 max-w-md w-full text-center space-y-4">
-          <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-            <TrendingUp className="h-7 w-7 text-primary" />
-          </div>
-          <div className="space-y-1">
-            <h1 className="font-heading text-xl font-bold">Fundos de Investimentos A.V.G</h1>
-            <p className="text-muted-foreground text-sm">Em Breve.</p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !INVESTMENTS_ENABLED) return;
     setLoading(true);
 
     const [walletRes, configRes, invRes] = await Promise.all([
