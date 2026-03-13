@@ -48,10 +48,7 @@ const Withdraw = () => {
 
       const [walletRes, confRes, wdRes] = await Promise.all([
         supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id),
-        supabase
-          .from("platform_config")
-          .select("key,value")
-          .in("key", ["withdrawal_hours", "withdrawal_amounts", "tax_rate"]),
+        supabase.rpc("get_public_platform_config", { _keys: ["withdrawal_hours", "withdrawal_amounts", "tax_rate"] }),
         supabase.from("withdrawals").select("*").eq("user_id", user.id).order("requested_at", { ascending: false }),
       ]);
 
