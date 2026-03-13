@@ -16,9 +16,27 @@ const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", cur
 
 type WalletBalances = { recharge: number; personal: number; income: number };
 
+const INVESTMENTS_ENABLED = false; // Toggle to true to re-enable
+
 const Investments = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+
+  if (!INVESTMENTS_ENABLED) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] p-4">
+        <Card className="p-8 max-w-md w-full text-center space-y-4">
+          <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="h-7 w-7 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="font-heading text-xl font-bold">Fundos de Investimentos A.V.G</h1>
+            <p className="text-muted-foreground text-sm">Em Breve.</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
   const [submitting, setSubmitting] = useState(false);
   const [redeeming, setRedeeming] = useState<string | null>(null);
 
