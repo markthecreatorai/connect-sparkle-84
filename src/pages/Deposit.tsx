@@ -40,7 +40,7 @@ const Deposit = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [vipLevels, setVipLevels] = useState<any[]>([]);
+  const [vipLevels] = useState<any[]>([]);
   const [wallets, setWallets] = useState({ recharge: 0, personal: 0, income: 0 });
   const [deposits, setDeposits] = useState<any[]>([]);
 
