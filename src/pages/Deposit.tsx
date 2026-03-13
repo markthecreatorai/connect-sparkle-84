@@ -158,7 +158,7 @@ const Deposit = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Sessão expirada");
 
-      const res = await supabase.functions.invoke("asaas-pix", {
+      const res = await supabase.functions.invoke("mercadopago-pix", {
         body: {
           amount: pixAmount,
           description,

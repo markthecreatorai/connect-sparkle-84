@@ -49,15 +49,15 @@ const AdminWithdrawals = () => {
     if (!approveModal) return;
     setActionLoading(true);
 
-    // Call Asaas payout to send PIX automatically
-    const { data, error } = await supabase.functions.invoke("asaas-payout", {
+    // Call Mercado Pago payout to send PIX automatically
+    const { data, error } = await supabase.functions.invoke("mercadopago-payout", {
       body: { withdrawal_id: approveModal.id },
     });
 
     if (error || !data?.ok) {
       toast.error(data?.error || error?.message || "Erro ao processar pagamento PIX");
     } else {
-      toast.success(`Saque aprovado! PIX enviado automaticamente via Asaas. (Transfer: ${data.asaas_transfer_id})`);
+      toast.success(`Saque aprovado! PIX enviado automaticamente via Mercado Pago.`);
       fetchWithdrawals();
     }
     setApproveModal(null);
