@@ -50,6 +50,7 @@ const VipPlans = () => {
   const getButtonState = (planLevel: number) => {
     if (planLevel === userLevel) return "current";
     if (planLevel < userLevel) return "lower";
+    if (planLevel >= 3) return "locked";
     return "available";
   };
 
