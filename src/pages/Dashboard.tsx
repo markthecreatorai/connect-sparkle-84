@@ -354,12 +354,10 @@ const Dashboard = () => {
               <Crown className="h-4.5 w-4.5 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nível VIP</p>
-              {!loading && (
-                <p className="font-heading text-xl text-foreground">
-                  {currentVipConfig?.display_name ?? vip.label}
-                </p>
-              )}
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cargos e Salários</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Consulte o Guia D.V.G
+              </p>
             </div>
           </div>
           <Button size="sm" variant="outline" className="text-xs h-8 font-medium" onClick={() => setShowVipLevels(true)}>
