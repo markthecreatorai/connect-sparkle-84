@@ -34,7 +34,7 @@ const Investments = () => {
 
     const [walletRes, configRes, invRes] = await Promise.all([
       supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id),
-      supabase.from("platform_config").select("value").eq("key", "investment_plans").single(),
+      supabase.rpc("get_public_platform_config", { _keys: ["investment_plans"] }),
       supabase.from("investments").select("*").eq("user_id", user.id).order("started_at", { ascending: false }),
     ]);
 
@@ -44,8 +44,9 @@ const Investments = () => {
     });
     setWallets(map);
 
-    if (configRes.data?.value) {
-      setPlans(configRes.data.value as Record<string, number>);
+    const investmentConfig = (configRes.data ?? []).find((c: any) => c.key === "investment_plans");
+    if (investmentConfig?.value) {
+      setPlans(investmentConfig.value as Record<string, number>);
     }
 
     setInvestments(invRes.data ?? []);

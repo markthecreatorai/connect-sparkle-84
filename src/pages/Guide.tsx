@@ -29,7 +29,7 @@ const Guide = () => {
     const load = async () => {
       const [vipRes, configRes, posRes] = await Promise.all([
         supabase.from("vip_levels" as never).select("*").order("sort_order", { ascending: true }),
-        supabase.from("platform_config").select("key, value"),
+        supabase.rpc("get_public_platform_config", { _keys: ["referral_deposit_commission", "referral_task_commission", "withdrawal_hours", "withdrawal_amounts", "tax_rate", "investment_plans"] }),
         supabase.from("team_positions").select("*").order("sort_order", { ascending: true }),
       ]);
 
