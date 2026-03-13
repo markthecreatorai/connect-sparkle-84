@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Crown, Star, Users, UserPlus, Network } from "lucide-react";
+import { ArrowLeft, Crown, Star, Users, UserPlus, Network, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface VipPlan {
   id: string;
@@ -50,6 +51,7 @@ const VipPlans = () => {
   const getButtonState = (planLevel: number) => {
     if (planLevel === userLevel) return "current";
     if (planLevel < userLevel) return "lower";
+    if (planLevel >= 3) return "locked";
     return "available";
   };
 
@@ -88,7 +90,8 @@ const VipPlans = () => {
                 key={plan.id}
                 className={cn(
                   "relative rounded-2xl p-[1px] transition-all",
-                  state === "current" && "ring-2 ring-yellow-500/60 shadow-lg shadow-yellow-500/10"
+                  state === "current" && "ring-2 ring-yellow-500/60 shadow-lg shadow-yellow-500/10",
+                  state === "locked" && "opacity-60"
                 )}
                 style={{
                   background: isVip9
@@ -112,7 +115,7 @@ const VipPlans = () => {
                           border: `1.5px solid ${isVip9 ? "transparent" : plan.color_hex}44`,
                         }}
                       >
-                        {plan.level}
+                        {state === "locked" ? <Lock className="w-4 h-4" /> : plan.level}
                       </div>
                       <div>
                         <h3
@@ -142,6 +145,16 @@ const VipPlans = () => {
                       <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                       <span className="text-xs font-semibold text-yellow-500">
                         Seu plano atual
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Locked badge */}
+                  {state === "locked" && (
+                    <div className="flex items-center gap-1.5 bg-muted border border-border rounded-lg px-3 py-1.5 w-fit">
+                      <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Plano exclusivo
                       </span>
                     </div>
                   )}
@@ -196,6 +209,15 @@ const VipPlans = () => {
                       onClick={() => navigate(`/deposit?vip_plan=${plan.id}`)}
                     >
                       Obter {plan.name}
+                    </Button>
+                  )}
+                  {state === "locked" && (
+                    <Button
+                      className="w-full font-semibold bg-muted text-muted-foreground"
+                      onClick={() => toast.info("Consulte seu Gerente.")}
+                    >
+                      <Lock className="w-4 h-4 mr-1.5" />
+                      Consulte seu Gerente
                     </Button>
                   )}
                   {state === "current" && (
