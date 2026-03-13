@@ -154,21 +154,18 @@ const VipPlans = () => {
                     <div className="grid grid-cols-3 gap-2">
                       <RewardBadge
                         label="Nível A"
-                        sublabel="Diretos"
                         value={plan.reward_a}
                         color="#22c55e"
                         icon={<UserPlus className="w-3 h-3" />}
                       />
                       <RewardBadge
                         label="Nível B"
-                        sublabel="Indiretos"
                         value={plan.reward_b}
                         color="#3b82f6"
                         icon={<Users className="w-3 h-3" />}
                       />
                       <RewardBadge
                         label="Nível C"
-                        sublabel="Rede"
                         value={plan.reward_c}
                         color="#8b5cf6"
                         icon={<Network className="w-3 h-3" />}
