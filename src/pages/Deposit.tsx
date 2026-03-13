@@ -114,11 +114,7 @@ const Deposit = () => {
 
     const load = async () => {
       setLoading(true);
-      const [levelsRes, walletRes, depRes, confRes] = await Promise.all([
-        supabase
-          .from("vip_levels" as never)
-          .select("level_code,display_name,deposit_required,daily_income,daily_tasks,is_available,min_direct_referrals,sort_order")
-          .order("sort_order", { ascending: true }),
+      const [walletRes, depRes, confRes] = await Promise.all([
         supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id),
         supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase
