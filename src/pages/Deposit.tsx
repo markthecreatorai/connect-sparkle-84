@@ -36,7 +36,7 @@ interface PixPayment {
 
 const Deposit = () => {
   const { user, profile, refreshProfile } = useAuth();
-  const [tab, setTab] = useState<Tab>("vip");
+  const [tab, setTab] = useState<Tab>("saldo");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
