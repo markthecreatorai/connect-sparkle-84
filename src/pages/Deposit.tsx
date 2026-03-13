@@ -200,17 +200,6 @@ const Deposit = () => {
     setRawDeposit("");
   };
 
-  const handleVipUpgrade = async () => {
-    if (!user || !selectedVip) return;
-    const targetDeposit = Number(selectedVip.deposit_required ?? 0);
-    await generatePix(
-      targetDeposit,
-      `Upgrade VIP para ${selectedVip.display_name}`,
-      "vip_upgrade",
-      selectedVip.level_code,
-    );
-    setSelectedVip(null);
-  };
 
   const copyPixCode = async () => {
     if (!pixPayment?.qr_code) return;
