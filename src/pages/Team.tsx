@@ -260,6 +260,22 @@ const Team = () => {
 
           <Card className="p-4 space-y-3">
             <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold">Regras de Saque</p>
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>Saque de Segunda a Sexta.</p>
+              <p>Horário das 11:00 às 17:00.</p>
+              <p>Permitido 1 saque por dia entre as carteiras.</p>
+              <p>Valor mínimo de saque 50,00 BRL.</p>
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Maiores informações, consulte o Guia A.V.G.
+            </p>
+          </Card>
+
+          <Card className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
               <Share2 className="h-4 w-4 text-primary" />
               <p className="text-sm font-semibold">Convide sua equipe</p>
             </div>
