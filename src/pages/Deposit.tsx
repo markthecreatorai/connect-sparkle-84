@@ -23,7 +23,7 @@ const fmtInput = (v: string): string => {
   return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
-type Tab = "saldo";
+
 
 interface PixPayment {
   qr_code: string;
@@ -35,11 +35,11 @@ interface PixPayment {
 
 const Deposit = () => {
   const { user, profile, refreshProfile } = useAuth();
-  const [tab, setTab] = useState<Tab>("saldo");
+  
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [vipLevels] = useState<any[]>([]);
+  
   const [wallets, setWallets] = useState({ recharge: 0, personal: 0, income: 0 });
   const [deposits, setDeposits] = useState<any[]>([]);
 
@@ -104,9 +104,6 @@ const Deposit = () => {
     };
   }, [pixPayment?.deposit_id, user]);
 
-  const vipLevel = Number(profile?.vip_level ?? 0);
-  const vipCode = vipLevel <= 0 ? "intern" : `vip${vipLevel}`;
-  const currentVip = vipLevels.find((v) => v.level_code === vipCode);
 
   useEffect(() => {
     if (!user) return;
