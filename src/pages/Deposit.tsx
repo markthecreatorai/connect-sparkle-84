@@ -219,14 +219,6 @@ const Deposit = () => {
 
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
-      <div className="glass-card rounded-xl p-3 grid grid-cols-2 gap-2">
-        <Button variant={tab === "vip" ? "default" : "outline"} className={tab === "vip" ? "gradient-primary text-primary-foreground" : ""} onClick={() => { setTab("vip"); setPixPayment(null); }}>
-          Ativar/Upgrade VIP
-        </Button>
-        <Button variant={tab === "saldo" ? "default" : "outline"} className={tab === "saldo" ? "gradient-primary text-primary-foreground" : ""} onClick={() => { setTab("saldo"); setPixPayment(null); }}>
-          Depositar Saldo
-        </Button>
-      </div>
 
       {/* PIX Payment QR Code */}
       {pixPayment && (
