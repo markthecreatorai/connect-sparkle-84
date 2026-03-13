@@ -104,9 +104,6 @@ const Deposit = () => {
     };
   }, [pixPayment?.deposit_id, user]);
 
-  const vipLevel = Number(profile?.vip_level ?? 0);
-  const vipCode = vipLevel <= 0 ? "intern" : `vip${vipLevel}`;
-  const currentVip = vipLevels.find((v) => v.level_code === vipCode);
 
   useEffect(() => {
     if (!user) return;
