@@ -44,8 +44,9 @@ const Investments = () => {
     });
     setWallets(map);
 
-    if (configRes.data?.value) {
-      setPlans(configRes.data.value as Record<string, number>);
+    const investmentConfig = (configRes.data ?? []).find((c: any) => c.key === "investment_plans");
+    if (investmentConfig?.value) {
+      setPlans(investmentConfig.value as Record<string, number>);
     }
 
     setInvestments(invRes.data ?? []);
