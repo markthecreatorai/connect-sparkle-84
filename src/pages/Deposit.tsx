@@ -301,8 +301,7 @@ const Deposit = () => {
           <Button className="w-full gradient-primary text-primary-foreground" disabled={submitting || amount < minDeposit} onClick={handleNormalDeposit}>
             {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando PIX...</> : "Gerar PIX para depósito"}
           </Button>
-        </Card>
-      )}
+      </Card>
 
       <Card className="p-5 space-y-3">
         <h2 className="font-heading text-lg font-bold">Histórico de Depósitos</h2>
