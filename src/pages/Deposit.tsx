@@ -50,7 +50,7 @@ const Deposit = () => {
   const [rawDeposit, setRawDeposit] = useState("");
   const [minDeposit, setMinDeposit] = useState(50);
 
-  const [selectedVip, setSelectedVip] = useState<any>(null);
+  
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
