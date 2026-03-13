@@ -24,9 +24,6 @@ verify_jwt = false
 [functions.mercadopago-webhook]
 verify_jwt = false
 
-[functions.asaas-payout]
-verify_jwt = false
-
 [functions.mercadopago-payout]
 verify_jwt = false
 
