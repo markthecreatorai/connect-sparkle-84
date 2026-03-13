@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowDownCircle, Check, Copy, Loader2, QrCode, Shield, Wallet } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ArrowDownCircle, Check, Copy, Loader2, QrCode, Wallet } from "lucide-react";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -24,7 +23,7 @@ const fmtInput = (v: string): string => {
   return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
-type Tab = "vip" | "saldo";
+type Tab = "saldo";
 
 interface PixPayment {
   qr_code: string;
@@ -36,11 +35,11 @@ interface PixPayment {
 
 const Deposit = () => {
   const { user, profile, refreshProfile } = useAuth();
-  const [tab, setTab] = useState<Tab>("vip");
+  const [tab, setTab] = useState<Tab>("saldo");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [vipLevels, setVipLevels] = useState<any[]>([]);
+  const [vipLevels] = useState<any[]>([]);
   const [wallets, setWallets] = useState({ recharge: 0, personal: 0, income: 0 });
   const [deposits, setDeposits] = useState<any[]>([]);
 
@@ -50,7 +49,7 @@ const Deposit = () => {
   const [rawDeposit, setRawDeposit] = useState("");
   const [minDeposit, setMinDeposit] = useState(50);
 
-  const [selectedVip, setSelectedVip] = useState<any>(null);
+  
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -114,11 +113,7 @@ const Deposit = () => {
 
     const load = async () => {
       setLoading(true);
-      const [levelsRes, walletRes, depRes, confRes] = await Promise.all([
-        supabase
-          .from("vip_levels" as never)
-          .select("level_code,display_name,deposit_required,daily_income,daily_tasks,is_available,min_direct_referrals,sort_order")
-          .order("sort_order", { ascending: true }),
+      const [walletRes, depRes, confRes] = await Promise.all([
         supabase.from("wallets").select("wallet_type,balance").eq("user_id", user.id),
         supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase
@@ -127,7 +122,7 @@ const Deposit = () => {
           .in("key", ["min_deposit"]),
       ]);
 
-      setVipLevels((levelsRes.data as any[]) ?? []);
+      
 
       const wm = { recharge: 0, personal: 0, income: 0 };
       (walletRes.data ?? []).forEach((w: any) => {
@@ -204,17 +199,6 @@ const Deposit = () => {
     setRawDeposit("");
   };
 
-  const handleVipUpgrade = async () => {
-    if (!user || !selectedVip) return;
-    const targetDeposit = Number(selectedVip.deposit_required ?? 0);
-    await generatePix(
-      targetDeposit,
-      `Upgrade VIP para ${selectedVip.display_name}`,
-      "vip_upgrade",
-      selectedVip.level_code,
-    );
-    setSelectedVip(null);
-  };
 
   const copyPixCode = async () => {
     if (!pixPayment?.qr_code) return;
@@ -234,14 +218,6 @@ const Deposit = () => {
 
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
-      <div className="glass-card rounded-xl p-3 grid grid-cols-2 gap-2">
-        <Button variant={tab === "vip" ? "default" : "outline"} className={tab === "vip" ? "gradient-primary text-primary-foreground" : ""} onClick={() => { setTab("vip"); setPixPayment(null); }}>
-          Ativar/Upgrade VIP
-        </Button>
-        <Button variant={tab === "saldo" ? "default" : "outline"} className={tab === "saldo" ? "gradient-primary text-primary-foreground" : ""} onClick={() => { setTab("saldo"); setPixPayment(null); }}>
-          Depositar Saldo
-        </Button>
-      </div>
 
       {/* PIX Payment QR Code */}
       {pixPayment && (
@@ -289,57 +265,7 @@ const Deposit = () => {
         </Card>
       )}
 
-      {tab === "vip" ? (
-        <Card className="p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            <h1 className="font-heading text-xl font-bold">Ativar / Upgrade VIP</h1>
-          </div>
-
-          <p className="text-sm text-muted-foreground">Nível atual: <b>{currentVip?.display_name ?? "Estagiário"}</b></p>
-
-          <div className="grid md:grid-cols-2 gap-3">
-            {vipLevels.map((v) => {
-              const levelNum = v.level_code === "intern" ? 0 : Number(String(v.level_code).replace("vip", ""));
-              const locked = !v.is_available;
-              const belowOrEqualCurrent = levelNum <= vipLevel;
-              const disabled = locked || belowOrEqualCurrent;
-              return (
-                <div key={v.level_code} className="rounded-xl border border-border p-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">{v.display_name}</h3>
-                    {locked && <span className="text-xs text-muted-foreground">🔒 Em breve</span>}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Depósito: {fmtBRL(Number(v.deposit_required || 0))}</p>
-                  <p className="text-xs text-muted-foreground">Renda diária: {fmtBRL(Number(v.daily_income || 0))}</p>
-                  <p className="text-xs text-muted-foreground">Tarefas/dia: {v.daily_tasks}</p>
-                  <Button disabled={disabled} onClick={() => setSelectedVip(v)} className="w-full" variant={disabled ? "outline" : "default"}>
-                    {belowOrEqualCurrent ? "Nível atual/anterior" : `Ativar ${v.display_name}`}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-
-          <Dialog open={!!selectedVip} onOpenChange={(open) => { if (!open) setSelectedVip(null); }}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Confirmação de Upgrade</DialogTitle>
-                <DialogDescription>
-                  Para ativar <b>{selectedVip?.display_name}</b>, será gerado um PIX de <b>{fmtBRL(Number(selectedVip?.deposit_required || 0))}</b>.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="flex-row gap-2">
-                <Button variant="outline" onClick={() => setSelectedVip(null)} className="flex-1">Cancelar</Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleVipUpgrade} disabled={submitting}>
-                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando...</> : "Confirmar"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </Card>
-      ) : (
-        <Card className="p-5 space-y-4">
+      <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <ArrowDownCircle className="h-5 w-5 text-primary" />
             <h1 className="font-heading text-xl font-bold">Depositar Saldo (Carteira de Recarga)</h1>
@@ -374,8 +300,7 @@ const Deposit = () => {
           <Button className="w-full gradient-primary text-primary-foreground" disabled={submitting || amount < minDeposit} onClick={handleNormalDeposit}>
             {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando PIX...</> : "Gerar PIX para depósito"}
           </Button>
-        </Card>
-      )}
+      </Card>
 
       <Card className="p-5 space-y-3">
         <h2 className="font-heading text-lg font-bold">Histórico de Depósitos</h2>
