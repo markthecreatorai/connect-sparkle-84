@@ -227,13 +227,11 @@ const VipPlans = () => {
 
 const RewardBadge = ({
   label,
-  sublabel,
   value,
   color,
   icon,
 }: {
   label: string;
-  sublabel: string;
   value: number;
   color: string;
   icon: React.ReactNode;
@@ -249,7 +247,6 @@ const RewardBadge = ({
     <p className="font-bold text-sm" style={{ color }}>
       {formatBRL(value)}
     </p>
-    <p className="text-[9px] text-muted-foreground">{sublabel}</p>
   </div>
 );
 
