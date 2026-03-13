@@ -266,57 +266,7 @@ const Deposit = () => {
         </Card>
       )}
 
-      {tab === "vip" ? (
-        <Card className="p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            <h1 className="font-heading text-xl font-bold">Ativar / Upgrade VIP</h1>
-          </div>
-
-          <p className="text-sm text-muted-foreground">Nível atual: <b>{currentVip?.display_name ?? "Estagiário"}</b></p>
-
-          <div className="grid md:grid-cols-2 gap-3">
-            {vipLevels.map((v) => {
-              const levelNum = v.level_code === "intern" ? 0 : Number(String(v.level_code).replace("vip", ""));
-              const locked = !v.is_available;
-              const belowOrEqualCurrent = levelNum <= vipLevel;
-              const disabled = locked || belowOrEqualCurrent;
-              return (
-                <div key={v.level_code} className="rounded-xl border border-border p-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">{v.display_name}</h3>
-                    {locked && <span className="text-xs text-muted-foreground">🔒 Em breve</span>}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Depósito: {fmtBRL(Number(v.deposit_required || 0))}</p>
-                  <p className="text-xs text-muted-foreground">Renda diária: {fmtBRL(Number(v.daily_income || 0))}</p>
-                  <p className="text-xs text-muted-foreground">Tarefas/dia: {v.daily_tasks}</p>
-                  <Button disabled={disabled} onClick={() => setSelectedVip(v)} className="w-full" variant={disabled ? "outline" : "default"}>
-                    {belowOrEqualCurrent ? "Nível atual/anterior" : `Ativar ${v.display_name}`}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-
-          <Dialog open={!!selectedVip} onOpenChange={(open) => { if (!open) setSelectedVip(null); }}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Confirmação de Upgrade</DialogTitle>
-                <DialogDescription>
-                  Para ativar <b>{selectedVip?.display_name}</b>, será gerado um PIX de <b>{fmtBRL(Number(selectedVip?.deposit_required || 0))}</b>.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="flex-row gap-2">
-                <Button variant="outline" onClick={() => setSelectedVip(null)} className="flex-1">Cancelar</Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleVipUpgrade} disabled={submitting}>
-                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gerando...</> : "Confirmar"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </Card>
-      ) : (
-        <Card className="p-5 space-y-4">
+      <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <ArrowDownCircle className="h-5 w-5 text-primary" />
             <h1 className="font-heading text-xl font-bold">Depositar Saldo (Carteira de Recarga)</h1>
