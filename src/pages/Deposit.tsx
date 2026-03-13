@@ -24,7 +24,7 @@ const fmtInput = (v: string): string => {
   return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
-type Tab = "vip" | "saldo";
+type Tab = "saldo";
 
 interface PixPayment {
   qr_code: string;
