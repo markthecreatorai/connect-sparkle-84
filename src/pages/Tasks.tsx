@@ -203,8 +203,8 @@ const Tasks = () => {
   const getVideoForTask = (taskNum: number) => {
     // Rotate through video pool using date seed + task number
     const dateSeed = today.replace(/-/g, "");
-    const index = (parseInt(dateSeed) + taskNum) % VIDEO_POOL.length;
-    return VIDEO_POOL[index];
+    const index = (parseInt(dateSeed) + taskNum) % (videoPool.length || 1);
+    return videoPool[index] || { id: "dQw4w9WgXcQ", title: "Vídeo" };
   };
 
   const getTaskStatus = (taskNum: number): VideoStatus => {
