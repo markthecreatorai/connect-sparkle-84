@@ -31,11 +31,25 @@ export const CareerProgression = ({
   directCount,
   totalTeam,
 }: CareerProgressionProps) => {
+  const [managerPhone, setManagerPhone] = useState("");
+
+  useEffect(() => {
+    supabase.from("platform_settings").select("value").eq("key", "manager_whatsapp").maybeSingle()
+      .then(({ data }) => {
+        if (data?.value && typeof data.value === "object" && "phone" in (data.value as any)) {
+          setManagerPhone((data.value as any).phone || "");
+        }
+      });
+  }, []);
+
   if (!positions.length) return null;
 
   const handleContactManager = () => {
-    // Open WhatsApp or support channel
-    window.open("https://wa.me/?text=Olá, gostaria de falar sobre minha promoção de cargo.", "_blank");
+    const phone = managerPhone.replace(/\D/g, "");
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent("Olá, gostaria de falar sobre minha promoção de cargo.")}`
+      : `https://wa.me/?text=${encodeURIComponent("Olá, gostaria de falar sobre minha promoção de cargo.")}`;
+    window.open(url, "_blank");
   };
 
   return (
