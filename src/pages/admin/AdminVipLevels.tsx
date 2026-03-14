@@ -398,25 +398,30 @@ const AdminVipLevels = () => {
       </FieldRow>
 
       <div className="sm:col-span-2 md:col-span-3 border-t pt-3 mt-1">
-        <p className="text-sm font-medium text-muted-foreground mb-2">Comissões por indicação</p>
+        <p className="text-sm font-medium text-muted-foreground mb-2">
+          Comissões por indicação
+          <span className="text-xs font-normal ml-2 text-muted-foreground/70">
+            (Reward = % × Preço do plano — auto-calculado)
+          </span>
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           <FieldRow label="% Nível A">
-            <Input type="number" step="0.01" value={data.commission_a_pct ?? 0} onChange={(e) => setter("commission_a_pct", e.target.value)} />
+            <Input type="number" step="0.01" min="0" max="1" value={data.commission_a_pct ?? 0} onChange={(e) => setter("commission_a_pct", e.target.value)} />
           </FieldRow>
           <FieldRow label="Reward A (R$)">
-            <Input type="number" value={data.reward_a ?? 0} onChange={(e) => setter("reward_a", e.target.value)} />
+            <Input type="number" value={data.reward_a ?? 0} disabled className="opacity-60 bg-muted" title="Auto-calculado: % Nível A × Preço" />
           </FieldRow>
           <FieldRow label="% Nível B">
-            <Input type="number" step="0.01" value={data.commission_b_pct ?? 0} onChange={(e) => setter("commission_b_pct", e.target.value)} />
+            <Input type="number" step="0.01" min="0" max="1" value={data.commission_b_pct ?? 0} onChange={(e) => setter("commission_b_pct", e.target.value)} />
           </FieldRow>
           <FieldRow label="Reward B (R$)">
-            <Input type="number" value={data.reward_b ?? 0} onChange={(e) => setter("reward_b", e.target.value)} />
+            <Input type="number" value={data.reward_b ?? 0} disabled className="opacity-60 bg-muted" title="Auto-calculado: % Nível B × Preço" />
           </FieldRow>
           <FieldRow label="% Nível C">
-            <Input type="number" step="0.01" value={data.commission_c_pct ?? 0} onChange={(e) => setter("commission_c_pct", e.target.value)} />
+            <Input type="number" step="0.01" min="0" max="1" value={data.commission_c_pct ?? 0} onChange={(e) => setter("commission_c_pct", e.target.value)} />
           </FieldRow>
           <FieldRow label="Reward C (R$)">
-            <Input type="number" value={data.reward_c ?? 0} onChange={(e) => setter("reward_c", e.target.value)} />
+            <Input type="number" value={data.reward_c ?? 0} disabled className="opacity-60 bg-muted" title="Auto-calculado: % Nível C × Preço" />
           </FieldRow>
         </div>
       </div>

@@ -236,28 +236,12 @@ const Team = () => {
             </TabsContent>
           </Tabs>
 
-          <Card className="p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-warning" />
-              <p className="text-sm font-semibold">Cargo atual</p>
-            </div>
-            {currentPosition ? (
-              <p className="text-sm">
-                Seu cargo atual: <b>{currentPosition.display_name}</b> · Salário mensal: <b>{fmtBRL(Number(currentPosition.monthly_salary || 0))}</b>
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Continue crescendo sua equipe para desbloquear cargos e salários!</p>
-            )}
-
-            <div className="space-y-1">
-              {positions.map((p) => (
-                <div key={p.id} className="text-xs text-muted-foreground flex justify-between border-b border-border/40 py-1">
-                  <span>{p.display_name}</span>
-                  <span>Diretos: {p.required_direct_referrals} · Total: {p.required_total_team} · {fmtBRL(Number(p.monthly_salary || 0))}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <CareerProgression
+            positions={positions}
+            currentPosition={currentPosition}
+            directCount={n1.length}
+            totalTeam={totalTeam}
+          />
 
           <Card className="p-4 space-y-3">
             <div className="flex items-center gap-2">
