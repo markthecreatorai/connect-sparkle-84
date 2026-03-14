@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Video, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, RefreshCw, Settings, Save } from "lucide-react";
 
 interface TaskVideo {
   id: string;
@@ -31,9 +31,23 @@ const emptyForm: FormData = {
   sort_order: 0,
 };
 
+interface VipTaskConfig {
+  id: string;
+  level_code: string;
+  display_name: string;
+  daily_tasks: number;
+  reward_per_task: number;
+  daily_income: number;
+  sort_order: number;
+}
+
 const AdminTasks = () => {
   const [videos, setVideos] = useState<TaskVideo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vipConfigs, setVipConfigs] = useState<VipTaskConfig[]>([]);
+  const [editedConfigs, setEditedConfigs] = useState<Record<string, Partial<VipTaskConfig>>>({});
+  const [savingConfig, setSavingConfig] = useState<string | null>(null);
+  const [loadingConfigs, setLoadingConfigs] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
@@ -59,9 +73,46 @@ const AdminTasks = () => {
     setVipLevels((data as any[]) || []);
   };
 
+  const fetchVipConfigs = async () => {
+    setLoadingConfigs(true);
+    const { data } = await supabase
+      .from("vip_levels")
+      .select("id, level_code, display_name, daily_tasks, reward_per_task, daily_income, sort_order")
+      .order("sort_order", { ascending: true });
+    setVipConfigs((data as VipTaskConfig[]) || []);
+    setEditedConfigs({});
+    setLoadingConfigs(false);
+  };
+
+  const handleConfigChange = (id: string, field: keyof VipTaskConfig, value: number) => {
+    setEditedConfigs((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value },
+    }));
+  };
+
+  const saveConfig = async (config: VipTaskConfig) => {
+    const edits = editedConfigs[config.id];
+    if (!edits) return;
+    setSavingConfig(config.id);
+    const { error } = await supabase
+      .from("vip_levels")
+      .update({
+        daily_tasks: edits.daily_tasks ?? config.daily_tasks,
+        reward_per_task: edits.reward_per_task ?? config.reward_per_task,
+        daily_income: edits.daily_income ?? config.daily_income,
+      })
+      .eq("id", config.id);
+    if (error) toast.error("Erro ao salvar configuração");
+    else toast.success(`${config.display_name} atualizado`);
+    setSavingConfig(null);
+    fetchVipConfigs();
+  };
+
   useEffect(() => {
     fetchVideos();
     fetchVipLevels();
+    fetchVipConfigs();
   }, []);
 
   const openNew = () => {
@@ -136,6 +187,86 @@ const AdminTasks = () => {
 
   return (
     <div className="p-4 lg:p-6 space-y-4">
+      {/* Task Config per VIP Level */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Configuração de Tarefas por Nível
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={fetchVipConfigs}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loadingConfigs ? (
+            <p className="text-muted-foreground text-sm py-8 text-center">Carregando...</p>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nível</TableHead>
+                    <TableHead className="text-center">Tarefas Diárias</TableHead>
+                    <TableHead className="text-center">Recompensa/Tarefa (R$)</TableHead>
+                    <TableHead className="text-center">Renda Diária (R$)</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vipConfigs.map((c) => {
+                    const edits = editedConfigs[c.id] || {};
+                    const hasChanges = Object.keys(edits).length > 0;
+                    return (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">{c.display_name}</TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="number"
+                            className="w-20 mx-auto text-center"
+                            value={edits.daily_tasks ?? c.daily_tasks}
+                            onChange={(e) => handleConfigChange(c.id, "daily_tasks", Number(e.target.value) || 0)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            className="w-24 mx-auto text-center"
+                            value={edits.reward_per_task ?? c.reward_per_task}
+                            onChange={(e) => handleConfigChange(c.id, "reward_per_task", Number(e.target.value) || 0)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            className="w-24 mx-auto text-center"
+                            value={edits.daily_income ?? c.daily_income}
+                            onChange={(e) => handleConfigChange(c.id, "daily_income", Number(e.target.value) || 0)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            disabled={!hasChanges || savingConfig === c.id}
+                            onClick={() => saveConfig(c)}
+                          >
+                            <Save className="h-4 w-4 mr-1" />
+                            {savingConfig === c.id ? "Salvando..." : "Salvar"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Videos Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="flex items-center gap-2">
