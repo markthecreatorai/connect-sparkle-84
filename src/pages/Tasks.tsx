@@ -80,7 +80,15 @@ const Tasks = () => {
           .eq("user_id", user.id)
           .eq("task_date", today)
           .maybeSingle(),
+        supabase
+          .from("task_videos")
+          .select("youtube_id, title")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
       ]);
+
+      const vids = ((videosRes.data as any[]) || []).map((v: any) => ({ id: v.youtube_id, title: v.title }));
+      setVideoPool(vids.length > 0 ? vids : [{ id: "dQw4w9WgXcQ", title: "Vídeo padrão" }]);
 
       const vip = vipRes.data as any;
       setVipConf(vip);
