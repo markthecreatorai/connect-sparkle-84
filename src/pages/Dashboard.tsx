@@ -360,7 +360,7 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          <Button size="sm" variant="outline" className="text-xs h-8 font-medium" onClick={() => setShowVipLevels(true)}>
+          <Button size="sm" variant="outline" className="text-xs h-8 font-medium" onClick={() => navigate("/vip")}>
             Ver níveis
           </Button>
         </div>
