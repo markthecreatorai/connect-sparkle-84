@@ -86,6 +86,7 @@ const AdminSettings = () => {
       { key: "min_deposit", value: { amount: parseFloat(depMin || "0") } },
       { key: "vip_requirements", value: { "0": 0, "1": parseInt(vip1 || "0"), "2": parseInt(vip2 || "0"), "3": parseInt(vip3 || "0"), "4": parseInt(vip4 || "0") } },
       { key: "platform_pix_key", value: { type: pixType, key: pixKey } },
+      { key: "manager_whatsapp", value: { phone: managerPhone.replace(/\D/g, "") } },
       { key: "commission_rates", value: { level_1: parseFloat(commN1 || "0"), level_2: parseFloat(commN2 || "0"), level_3: parseFloat(commN3 || "0") } },
     ];
 
