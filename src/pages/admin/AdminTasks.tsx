@@ -31,9 +31,23 @@ const emptyForm: FormData = {
   sort_order: 0,
 };
 
+interface VipTaskConfig {
+  id: string;
+  level_code: string;
+  display_name: string;
+  daily_tasks: number;
+  reward_per_task: number;
+  daily_income: number;
+  sort_order: number;
+}
+
 const AdminTasks = () => {
   const [videos, setVideos] = useState<TaskVideo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vipConfigs, setVipConfigs] = useState<VipTaskConfig[]>([]);
+  const [editedConfigs, setEditedConfigs] = useState<Record<string, Partial<VipTaskConfig>>>({});
+  const [savingConfig, setSavingConfig] = useState<string | null>(null);
+  const [loadingConfigs, setLoadingConfigs] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
