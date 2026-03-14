@@ -8,7 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
@@ -71,6 +74,35 @@ function extractLevelNumber(code: string): number {
   return m ? parseInt(m[1], 10) : -1;
 }
 
+const SortableVipCard = ({ row, idx, setField, setDeleteTarget, renderForm, fmtBRL }: {
+  row: UnifiedLevel; idx: number;
+  setField: (idx: number, key: keyof UnifiedLevel, value: any) => void;
+  setDeleteTarget: (r: UnifiedLevel) => void;
+  renderForm: (data: any, setter: (key: string, val: any) => void, showCode?: boolean) => React.ReactNode;
+  fmtBRL: (v: number) => string;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.vl_id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <Card ref={setNodeRef} style={style} className="p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none p-1 -ml-1 text-muted-foreground hover:text-foreground">
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: row.color_hex }} />
+          <h3 className="font-semibold text-sm">{row.display_name} <span className="text-muted-foreground font-normal">({row.level_code})</span></h3>
+          {row.price > 0 && <span className="text-xs text-muted-foreground">{fmtBRL(Number(row.price))}</span>}
+        </div>
+        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(row)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+      {renderForm(row, (key, val) => setField(idx, key as keyof UnifiedLevel, val), true)}
+    </Card>
+  );
+};
+
 const AdminVipLevels = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,6 +111,11 @@ const AdminVipLevels = () => {
   const [newLevel, setNewLevel] = useState({ ...defaultNew });
   const [deleteTarget, setDeleteTarget] = useState<UnifiedLevel | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const load = async () => {
     setLoading(true);
@@ -251,6 +288,17 @@ const AdminVipLevels = () => {
     load();
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setRows((prev) => {
+      const oldIdx = prev.findIndex((r) => r.vl_id === active.id);
+      const newIdx = prev.findIndex((r) => r.vl_id === over.id);
+      const reordered = arrayMove(prev, oldIdx, newIdx);
+      return reordered.map((r, i) => ({ ...r, sort_order: i }));
+    });
+  };
+
   if (loading) {
     return (
       <div className="space-y-3 p-4 lg:p-6 max-w-6xl mx-auto">
@@ -355,23 +403,23 @@ const AdminVipLevels = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {rows.map((r, idx) => (
-          <Card key={r.vl_id} className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: r.color_hex }} />
-                <h3 className="font-semibold text-sm">{r.display_name} <span className="text-muted-foreground font-normal">({r.level_code})</span></h3>
-                {r.price > 0 && <span className="text-xs text-muted-foreground">{fmtBRL(Number(r.price))}</span>}
-              </div>
-              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(r)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            {renderForm(r, (key, val) => setField(idx, key as keyof UnifiedLevel, val), true)}
-          </Card>
-        ))}
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={rows.map(r => r.vl_id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-4">
+            {rows.map((r, idx) => (
+              <SortableVipCard
+                key={r.vl_id}
+                row={r}
+                idx={idx}
+                setField={setField}
+                setDeleteTarget={setDeleteTarget}
+                renderForm={renderForm}
+                fmtBRL={fmtBRL}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
