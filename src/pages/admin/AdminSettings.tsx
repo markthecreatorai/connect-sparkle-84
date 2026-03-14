@@ -38,6 +38,9 @@ const AdminSettings = () => {
   const [pixType, setPixType] = useState("cpf");
   const [pixKey, setPixKey] = useState("");
 
+  // Gerente
+  const [managerPhone, setManagerPhone] = useState("");
+
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from("platform_settings").select("key, value");
