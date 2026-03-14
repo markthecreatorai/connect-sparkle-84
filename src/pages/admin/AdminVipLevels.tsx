@@ -162,15 +162,33 @@ const AdminVipLevels = () => {
 
   useEffect(() => { load(); }, []);
 
+  const PCT_FIELDS = ["commission_a_pct", "commission_b_pct", "commission_c_pct"] as const;
+
   const setField = (idx: number, key: keyof UnifiedLevel, value: any) => {
     setRows((prev) => {
       const next = [...prev];
-      next[idx] = { ...next[idx], [key]: value };
+      let v = value;
+      if ((PCT_FIELDS as readonly string[]).includes(key)) {
+        v = Math.min(1, Math.max(0, Number(v) || 0));
+      }
+      next[idx] = { ...next[idx], [key]: v };
       return next;
     });
   };
 
+  const validateRows = (list: UnifiedLevel[]): string | null => {
+    for (const r of list) {
+      for (const f of PCT_FIELDS) {
+        const v = Number(r[f]);
+        if (v < 0 || v > 1) return `${r.display_name}: comissão ${f} deve estar entre 0 e 1 (0%–100%)`;
+      }
+    }
+    return null;
+  };
+
   const save = async () => {
+    const err = validateRows(rows);
+    if (err) { toast.error(err); return; }
     setSaving(true);
     for (const r of rows) {
       // Update vip_levels
