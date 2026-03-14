@@ -259,6 +259,17 @@ const AdminVipLevels = () => {
     load();
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setRows((prev) => {
+      const oldIdx = prev.findIndex((r) => r.vl_id === active.id);
+      const newIdx = prev.findIndex((r) => r.vl_id === over.id);
+      const reordered = arrayMove(prev, oldIdx, newIdx);
+      return reordered.map((r, i) => ({ ...r, sort_order: i }));
+    });
+  };
+
   if (loading) {
     return (
       <div className="space-y-3 p-4 lg:p-6 max-w-6xl mx-auto">
