@@ -203,6 +203,16 @@ const AdminSettings = () => {
         </div>
       </div>
 
+      {/* Contato do Gerente */}
+      <div className="glass-card rounded-xl p-5 space-y-4">
+        <h2 className="font-heading text-sm font-bold text-primary">Contato do Gerente (WhatsApp)</h2>
+        <p className="text-xs text-muted-foreground">Número usado no botão "Falar com gerente" do plano de carreira. Formato: código do país + DDD + número (ex: 5511999999999)</p>
+        <div className="space-y-1">
+          <Label className="text-xs">WhatsApp do Gerente</Label>
+          <Input value={managerPhone} onChange={(e) => setManagerPhone(e.target.value)} placeholder="5511999999999" className="bg-secondary border-border" />
+        </div>
+      </div>
+
       <Button onClick={() => setConfirmModal(true)} disabled={saving} className="w-full gradient-primary btn-glow text-primary-foreground gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Salvar Configurações
