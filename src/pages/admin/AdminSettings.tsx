@@ -65,6 +65,8 @@ const AdminSettings = () => {
       setPixType(pix?.type ?? "cpf");
       setPixKey(pix?.key ?? "");
 
+      setManagerPhone(String((map["manager_whatsapp"] as any)?.phone ?? ""));
+
       setLoading(false);
     };
     load();
