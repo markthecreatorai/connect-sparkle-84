@@ -363,23 +363,23 @@ const AdminVipLevels = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {rows.map((r, idx) => (
-          <Card key={r.vl_id} className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: r.color_hex }} />
-                <h3 className="font-semibold text-sm">{r.display_name} <span className="text-muted-foreground font-normal">({r.level_code})</span></h3>
-                {r.price > 0 && <span className="text-xs text-muted-foreground">{fmtBRL(Number(r.price))}</span>}
-              </div>
-              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(r)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            {renderForm(r, (key, val) => setField(idx, key as keyof UnifiedLevel, val), true)}
-          </Card>
-        ))}
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={rows.map(r => r.vl_id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-4">
+            {rows.map((r, idx) => (
+              <SortableVipCard
+                key={r.vl_id}
+                row={r}
+                idx={idx}
+                setField={setField}
+                setDeleteTarget={setDeleteTarget}
+                renderForm={renderForm}
+                fmtBRL={fmtBRL}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
