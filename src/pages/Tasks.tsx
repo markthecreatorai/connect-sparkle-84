@@ -94,6 +94,7 @@ const Tasks = () => {
       setVipConf(vip);
 
       if (!taskRes.data && vip) {
+        // No record for today — create one
         const insertPayload = {
           user_id: user.id,
           task_date: today,
@@ -107,6 +108,30 @@ const Tasks = () => {
 
         const inserted = await supabase.from("daily_tasks").insert(insertPayload).select("*").maybeSingle();
         setDailyTask(inserted.data);
+      } else if (taskRes.data && vip) {
+        const existing = taskRes.data as any;
+        // FIX: If user upgraded VIP after today's record was created, refresh it
+        if (existing.vip_level !== vipCode) {
+          const newRequired = Number(vip.daily_tasks ?? 0);
+          const newReward = Number(vip.reward_per_task ?? 0);
+          const completed = Number(existing.tasks_completed || 0);
+          // Only upgrade (don't lose completed progress)
+          const updatePayload = {
+            tasks_required: newRequired,
+            reward_per_task: newReward,
+            vip_level: vipCode,
+            is_completed: completed >= newRequired,
+          };
+          const updated = await supabase
+            .from("daily_tasks")
+            .update(updatePayload)
+            .eq("id", existing.id)
+            .select("*")
+            .maybeSingle();
+          setDailyTask(updated.data ?? { ...existing, ...updatePayload });
+        } else {
+          setDailyTask(existing);
+        }
       } else {
         setDailyTask(taskRes.data);
       }
