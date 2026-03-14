@@ -74,6 +74,35 @@ function extractLevelNumber(code: string): number {
   return m ? parseInt(m[1], 10) : -1;
 }
 
+const SortableVipCard = ({ row, idx, setField, setDeleteTarget, renderForm, fmtBRL }: {
+  row: UnifiedLevel; idx: number;
+  setField: (idx: number, key: keyof UnifiedLevel, value: any) => void;
+  setDeleteTarget: (r: UnifiedLevel) => void;
+  renderForm: (data: any, setter: (key: string, val: any) => void, showCode?: boolean) => React.ReactNode;
+  fmtBRL: (v: number) => string;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.vl_id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <Card ref={setNodeRef} style={style} className="p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none p-1 -ml-1 text-muted-foreground hover:text-foreground">
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: row.color_hex }} />
+          <h3 className="font-semibold text-sm">{row.display_name} <span className="text-muted-foreground font-normal">({row.level_code})</span></h3>
+          {row.price > 0 && <span className="text-xs text-muted-foreground">{fmtBRL(Number(row.price))}</span>}
+        </div>
+        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(row)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+      {renderForm(row, (key, val) => setField(idx, key as keyof UnifiedLevel, val), true)}
+    </Card>
+  );
+};
+
 const AdminVipLevels = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
