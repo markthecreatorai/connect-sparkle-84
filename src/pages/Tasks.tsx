@@ -32,6 +32,7 @@ const Tasks = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [videoPool, setVideoPool] = useState<VideoItem[]>([]);
 
   const today = new Date().toISOString().slice(0, 10);
 
