@@ -68,7 +68,7 @@ const Tasks = () => {
       setLoading(true);
       const vipCode = levelToCode(profile?.vip_level);
 
-      const [vipRes, taskRes] = await Promise.all([
+      const [vipRes, taskRes, videosRes] = await Promise.all([
         supabase
           .from("vip_levels" as never)
           .select("level_code,daily_tasks,reward_per_task,daily_income")
