@@ -497,6 +497,36 @@ export type Database = {
           },
         ]
       }
+      task_videos: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          vip_level_code: string | null
+          youtube_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          vip_level_code?: string | null
+          youtube_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          vip_level_code?: string | null
+          youtube_id?: string
+        }
+        Relationships: []
+      }
       team_positions: {
         Row: {
           display_name: string

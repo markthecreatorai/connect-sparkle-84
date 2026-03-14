@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   BarChart3,
+  Video,
 } from "lucide-react";
 
 const adminNav = [
@@ -25,6 +26,7 @@ const adminNav = [
   { to: "/admin/settings", icon: Settings, label: "Configurações" },
   { to: "/admin/vip-levels", icon: Crown, label: "Níveis VIP" },
   { to: "/admin/reports", icon: BarChart3, label: "Relatórios" },
+  { to: "/admin/tasks", icon: Video, label: "Tarefas" },
   { to: "/admin/logs", icon: FileText, label: "Logs" },
 ];
 

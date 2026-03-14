@@ -27,6 +27,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminVipLevels from "./pages/admin/AdminVipLevels";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminLogs from "./pages/admin/AdminLogs";
+import AdminTasks from "./pages/admin/AdminTasks";
 import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
 import Investments from "./pages/Investments";
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminPage><AdminSettings /></AdminPage>} />
             <Route path="/admin/vip-levels" element={<AdminPage><AdminVipLevels /></AdminPage>} />
             <Route path="/admin/reports" element={<AdminPage><AdminReports /></AdminPage>} />
+            <Route path="/admin/tasks" element={<AdminPage><AdminTasks /></AdminPage>} />
             <Route path="/admin/logs" element={<AdminPage><AdminLogs /></AdminPage>} />
 
             <Route path="*" element={<NotFound />} />
