@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   BarChart3,
+  Video,
 } from "lucide-react";
 
 const adminNav = [
