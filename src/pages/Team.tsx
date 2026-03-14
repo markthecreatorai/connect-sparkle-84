@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Users, UserPlus, Network, Crown, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { CareerProgression } from "@/components/team/CareerProgression";
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
