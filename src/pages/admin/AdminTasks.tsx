@@ -112,6 +112,7 @@ const AdminTasks = () => {
   useEffect(() => {
     fetchVideos();
     fetchVipLevels();
+    fetchVipConfigs();
   }, []);
 
   const openNew = () => {
