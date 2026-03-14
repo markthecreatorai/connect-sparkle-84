@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Video, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, RefreshCw, Settings, Save } from "lucide-react";
 
 interface TaskVideo {
   id: string;
