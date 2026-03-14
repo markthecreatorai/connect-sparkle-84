@@ -17,39 +17,7 @@ const levelToCode = (vipLevel: number | null | undefined) => {
   return `vip${lvl}`;
 };
 
-// Pool of 30 video thumbnails and titles (YouTube IDs)
-const VIDEO_POOL = [
-  { id: "dQw4w9WgXcQ", title: "Estratégias de Marketing Digital" },
-  { id: "jNQXAC9IVRw", title: "Primeiros Passos no Empreendedorismo" },
-  { id: "9bZkp7q19f0", title: "Como Conquistar Clientes Online" },
-  { id: "kJQP7kiw5Fk", title: "Técnicas de Vendas Avançadas" },
-  { id: "RgKAFK5djSk", title: "Mindset de Sucesso Financeiro" },
-  { id: "fJ9rUzIMcZQ", title: "Planejamento Financeiro Pessoal" },
-  { id: "CevxZvSJLk8", title: "Liderança e Gestão de Equipes" },
-  { id: "OPf0YbXqDm0", title: "Inteligência Emocional nos Negócios" },
-  { id: "hT_nvWreIhg", title: "Renda Extra: Guia Completo" },
-  { id: "kXYiU_JCYtU", title: "Investimentos para Iniciantes" },
-  { id: "JGwWNGJdvx8", title: "Motivação e Produtividade" },
-  { id: "YQHsXMglC9A", title: "Networking Profissional Eficaz" },
-  { id: "lp-EO5I60KA", title: "Como Criar uma Marca Pessoal" },
-  { id: "e-ORhEE9VVg", title: "Finanças: Controle de Gastos" },
-  { id: "09R8_2nJtjg", title: "Metas e Objetivos SMART" },
-  { id: "pRpeEdMmmQ0", title: "E-commerce: Como Começar" },
-  { id: "60ItHLz5WEA", title: "Comunicação Persuasiva" },
-  { id: "YykjpeuMNEk", title: "Gestão do Tempo Eficiente" },
-  { id: "fLexgOxsZu0", title: "Marketing de Indicação" },
-  { id: "nfWlot6h_JM", title: "Como Montar um Pitch de Vendas" },
-  { id: "bx1Bh8ZvH84", title: "Resiliência nos Negócios" },
-  { id: "M7lc1UVf-VE", title: "Educação Financeira Básica" },
-  { id: "2Vv-BfVoq4g", title: "Atendimento ao Cliente Premium" },
-  { id: "FTQbiNvZqaY", title: "Análise de Mercado e Tendências" },
-  { id: "RK1K2bCg4J8", title: "Trabalho em Equipe de Alta Performance" },
-  { id: "PT2_F-1esPk", title: "Como Escalar seu Negócio" },
-  { id: "Zi_XLOBDo_Y", title: "Mentalidade Empreendedora" },
-  { id: "L_jWHffIx5E", title: "Gatilhos Mentais em Vendas" },
-  { id: "oHg5SJYRHA0", title: "Fidelização de Clientes" },
-  { id: "QH2-TGUlwu4", title: "Estratégias de Crescimento Rápido" },
-];
+type VideoItem = { id: string; title: string };
 
 type VideoStatus = "pending" | "watching" | "completed";
 
