@@ -223,12 +223,20 @@ const AdminTasks = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>YouTube ID</Label>
+              <Label>Link do YouTube</Label>
               <Input
-                placeholder="ex: dQw4w9WgXcQ"
-                value={form.youtube_id}
-                onChange={(e) => setForm({ ...form, youtube_id: e.target.value })}
+                placeholder="ex: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                value={form.youtube_id.includes("youtu") ? form.youtube_id : form.youtube_id ? `https://www.youtube.com/watch?v=${form.youtube_id}` : ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  // Extract YouTube ID from various URL formats
+                  const match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+                  setForm({ ...form, youtube_id: match ? match[1] : raw });
+                }}
               />
+              {form.youtube_id && !form.youtube_id.includes("youtu") && (
+                <p className="text-xs text-muted-foreground">ID extraído: <code className="bg-secondary px-1 rounded">{form.youtube_id}</code></p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Título</Label>
