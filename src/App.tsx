@@ -27,6 +27,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminVipLevels from "./pages/admin/AdminVipLevels";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminLogs from "./pages/admin/AdminLogs";
+import AdminTasks from "./pages/admin/AdminTasks";
 import Profile from "./pages/Profile";
 import VipPlans from "./pages/VipPlans";
 import Investments from "./pages/Investments";
