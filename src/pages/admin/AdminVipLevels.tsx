@@ -83,6 +83,11 @@ const AdminVipLevels = () => {
   const [deleteTarget, setDeleteTarget] = useState<UnifiedLevel | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   const load = async () => {
     setLoading(true);
     const [{ data: levels }, { data: plans }] = await Promise.all([
