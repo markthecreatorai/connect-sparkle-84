@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
         let currentValid = false;
         if (isBcryptHash(profile.payment_password_hash)) {
-          currentValid = await bcrypt.compare(current_password, profile.payment_password_hash);
+          currentValid = bcrypt.compareSync(current_password, profile.payment_password_hash);
         } else {
           const currentHash = await hashSHA256(current_password);
           currentValid = currentHash === profile.payment_password_hash;
@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
         if (!currentValid) throw new Error("Senha atual inválida");
       }
 
-      const newHash = await bcrypt.hash(password);
+      const salt = bcrypt.genSaltSync(10);
+      const newHash = bcrypt.hashSync(password, salt);
       await db.from("profiles").update({ payment_password_hash: newHash }).eq("id", userId);
 
       return new Response(JSON.stringify({ ok: true }), {
@@ -112,12 +113,13 @@ Deno.serve(async (req) => {
 
       let valid = false;
       if (isBcryptHash(profile.payment_password_hash)) {
-        valid = await bcrypt.compare(password, profile.payment_password_hash);
+        valid = bcrypt.compareSync(password, profile.payment_password_hash);
       } else {
         const hash = await hashSHA256(password);
         valid = hash === profile.payment_password_hash;
         if (valid) {
-          const upgradedHash = await bcrypt.hash(password);
+          const salt = bcrypt.genSaltSync(10);
+          const upgradedHash = bcrypt.hashSync(password, salt);
           await db.from("profiles").update({ payment_password_hash: upgradedHash }).eq("id", userId);
         }
       }
