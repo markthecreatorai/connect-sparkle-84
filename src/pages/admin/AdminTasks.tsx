@@ -73,6 +73,42 @@ const AdminTasks = () => {
     setVipLevels((data as any[]) || []);
   };
 
+  const fetchVipConfigs = async () => {
+    setLoadingConfigs(true);
+    const { data } = await supabase
+      .from("vip_levels")
+      .select("id, level_code, display_name, daily_tasks, reward_per_task, daily_income, sort_order")
+      .order("sort_order", { ascending: true });
+    setVipConfigs((data as VipTaskConfig[]) || []);
+    setEditedConfigs({});
+    setLoadingConfigs(false);
+  };
+
+  const handleConfigChange = (id: string, field: keyof VipTaskConfig, value: number) => {
+    setEditedConfigs((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value },
+    }));
+  };
+
+  const saveConfig = async (config: VipTaskConfig) => {
+    const edits = editedConfigs[config.id];
+    if (!edits) return;
+    setSavingConfig(config.id);
+    const { error } = await supabase
+      .from("vip_levels")
+      .update({
+        daily_tasks: edits.daily_tasks ?? config.daily_tasks,
+        reward_per_task: edits.reward_per_task ?? config.reward_per_task,
+        daily_income: edits.daily_income ?? config.daily_income,
+      })
+      .eq("id", config.id);
+    if (error) toast.error("Erro ao salvar configuração");
+    else toast.success(`${config.display_name} atualizado`);
+    setSavingConfig(null);
+    fetchVipConfigs();
+  };
+
   useEffect(() => {
     fetchVideos();
     fetchVipLevels();
