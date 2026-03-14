@@ -164,14 +164,43 @@ const AdminVipLevels = () => {
 
   const PCT_FIELDS = ["commission_a_pct", "commission_b_pct", "commission_c_pct"] as const;
 
+  /**
+   * Auto-cálculo de Reward A/B/C:
+   * Base = price (preço do plano VIP).
+   * reward_x = commission_x_pct * price
+   * Quando o admin altera % ou preço, os rewards são recalculados automaticamente.
+   */
+  const autoCalcRewards = (row: UnifiedLevel): UnifiedLevel => {
+    const base = Math.max(0, Number(row.price) || 0);
+    return {
+      ...row,
+      reward_a: Math.round(Number(row.commission_a_pct || 0) * base * 100) / 100,
+      reward_b: Math.round(Number(row.commission_b_pct || 0) * base * 100) / 100,
+      reward_c: Math.round(Number(row.commission_c_pct || 0) * base * 100) / 100,
+    };
+  };
+
   const setField = (idx: number, key: keyof UnifiedLevel, value: any) => {
     setRows((prev) => {
       const next = [...prev];
       let v = value;
+      // Clamp percentages 0–1
       if ((PCT_FIELDS as readonly string[]).includes(key)) {
         v = Math.min(1, Math.max(0, Number(v) || 0));
       }
+      // Prevent negative numeric fields
+      const numericFields = ["price", "deposit_required", "daily_tasks", "reward_per_task",
+        "daily_income", "monthly_income", "yearly_income", "min_direct_referrals",
+        "reward_a", "reward_b", "reward_c"] as const;
+      if ((numericFields as readonly string[]).includes(key)) {
+        v = Math.max(0, Number(v) || 0);
+      }
       next[idx] = { ...next[idx], [key]: v };
+      // Auto-recalculate rewards when % or price changes
+      const autoCalcTriggers = ["commission_a_pct", "commission_b_pct", "commission_c_pct", "price"];
+      if (autoCalcTriggers.includes(key)) {
+        next[idx] = autoCalcRewards(next[idx]);
+      }
       return next;
     });
   };
